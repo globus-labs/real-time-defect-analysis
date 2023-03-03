@@ -30,7 +30,7 @@ class PyTorchSegmenter(BaseSegmenter):
 
     def __init__(
             self,
-            model_name: str = 'voids_segmentation_091321.pth'
+            model_name: str = 'voids_segmentation_030323.pth'
     ):
         """
 
