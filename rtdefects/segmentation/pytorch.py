@@ -49,10 +49,10 @@ class PyTorchSegmenter(BaseSegmenter):
             model_name: str = 'voids_segmentation_030323.pth'
     ):
         """
-
         Args:
             model_name: Name of the model we should use
         """
+
         # Get the preprocessor and build the preprocessing pipeline
         assert model_name in _encoders, f'No encoder defined for {model_name}. Consult developer'
         preprocessing_fn = smp.encoders.get_preprocessing_fn(_encoders[model_name])
