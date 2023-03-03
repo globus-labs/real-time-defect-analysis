@@ -6,7 +6,7 @@ import numpy as np
 import imageio
 
 from rtdefects.analysis import analyze_defects
-from rtdefects.segmentation.pytorch import PyTorchSegmenter
+from rtdefects.segmentation.pytorch import PyTorchSegmenter, download_model
 from rtdefects.segmentation.tf import TFSegmenter
 
 
@@ -19,6 +19,17 @@ def image() -> np.ndarray:
 def mask() -> np.ndarray:
     img = imageio.imread(str(Path(__file__).parent.joinpath('test-image-mask.tif')))
     return np.array(img)
+
+
+def test_download(tmpdir):
+    from rtdefects.segmentation import pytorch
+    orig = pytorch._model_dir
+    try:
+        pytorch._model_dir = tmpdir
+        download_model('README.md')
+        assert (tmpdir / 'README.md').read_text('ascii').startswith('#')
+    finally:
+        pytorch._model_dir = orig
 
 
 @mark.parametrize(
