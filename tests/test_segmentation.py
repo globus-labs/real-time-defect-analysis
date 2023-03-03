@@ -23,7 +23,7 @@ def mask() -> np.ndarray:
 
 @mark.parametrize(
     'segmenter',
-    [TFSegmenter(), PyTorchSegmenter()]
+    [TFSegmenter(), PyTorchSegmenter(), PyTorchSegmenter('voids_segmentation_030323.pth')]
 )
 def test_run(image, segmenter):
     image = segmenter.transform_standard_image(image)
