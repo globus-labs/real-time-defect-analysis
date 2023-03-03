@@ -1,4 +1,5 @@
 """Test the segmentation function"""
+from math import isclose
 from pathlib import Path
 
 from pytest import fixture, mark
@@ -43,6 +44,7 @@ def test_run(image, segmenter):
     output = np.squeeze(output)
     assert output.shape == (1024, 1024)
     imageio.imwrite('test-image-mask.tif', output)
+    assert isclose(output.mean(), 0.03, abs_tol=0.01)
 
 
 def test_analyze(mask):
