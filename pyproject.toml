@@ -6,7 +6,7 @@ authors = [
 ]
 description = 'Server for performing real-time void detection in TEM images'
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 license = { file = "LICENSE" }
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -26,7 +26,7 @@ dependencies = [
     "hyperspy==1.7.*",
     "segmentation_models.pytorch==0.2.*",
     "torch==1.8.*",
-    "albumentations=1.*",
+    "albumentations==1.*",
 
     # Related to post-processing
     "pandas==1.*",
@@ -35,7 +35,7 @@ dependencies = [
     # Related to the CLI/web interface
     "watchdog>2",
     "flask",
-    "flask-cores",
+    "flask-cors",
     "bokeh",
     "funcx",
 ]
