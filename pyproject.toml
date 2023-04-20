@@ -1,0 +1,56 @@
+[project]
+name = "rtdefects"
+version = "0.0.1"
+authors = [
+    { name = "Logan Ward", email = "lward@anl.gov" },
+]
+description = 'Server for performing real-time void detection in TEM images'
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    # Related to the image processing
+    "tensorflow>2",
+    "scikit-image==0.19.*",
+    "imageio==2.*",
+    "imageio-ffmpeg",
+    "hyperspy==1.7.*",
+    "segmentation_models.pytorch==0.2.*",
+    "torch==1.8.*",
+    "albumentations=1.*",
+
+    # Related to post-processing
+    "pandas==1.*",
+    "trackpy==0.5.*",
+
+    # Related to the CLI/web interface
+    "watchdog>2",
+    "flask",
+    "flask-cores",
+    "bokeh",
+    "funcx",
+]
+
+[tool.setuptools.packages.find]
+include = ['rtdefects*']
+
+[project.urls]
+repository = "https://github.com/ivem-argonne/real-time-defect-analysis"
+
+[project.optional-dependencies]
+test = [
+    'flake8',
+    'pytest',
+    'pytest-timeout',
+    'pytest-mock',
+    'pytest-cov',
+]
