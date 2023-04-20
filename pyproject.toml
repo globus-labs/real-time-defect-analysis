@@ -25,7 +25,7 @@ dependencies = [
     "imageio-ffmpeg",
     "hyperspy==1.7.*",
     "segmentation_models.pytorch==0.2.*",
-    "torch==1.8.*",
+    "torch<2",
     "albumentations==1.*",
 
     # Related to post-processing
