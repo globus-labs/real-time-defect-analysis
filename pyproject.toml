@@ -23,6 +23,7 @@ dependencies = [
     "scikit-image==0.19.*",
     "imageio==2.*",
     "imageio-ffmpeg",
+    "pint<0.20",
     "hyperspy==1.7.*",
     "segmentation_models.pytorch==0.2.*",
     "torch<2",
@@ -38,6 +39,7 @@ dependencies = [
     "flask-cors",
     "bokeh",
     "funcx",
+    "ratelimit"
 ]
 
 [tool.setuptools.packages.find]
@@ -54,3 +56,6 @@ test = [
     'pytest-mock',
     'pytest-cov',
 ]
+
+[project.scripts]
+rtdefects = "rtdefects.cli:main"
