@@ -34,7 +34,7 @@ def analyze_defects(mask: np.ndarray, min_size: int = 50) -> Tuple[dict, np.ndar
 
     # Compute region properties
     props = measure.regionprops(labels, mask)
-    radii = [p['equivalent_diameter'] for p in props]
+    radii = [p['equivalent_diameter'] / 2 for p in props]
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
     output['positions'] = [p['centroid'] for p in props]
@@ -137,7 +137,7 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
         # Get the frames where this void is visible
         visible_frames = track['frame']
 
-        # Get all fo the frames between start and stop
+        # Get all frames between start and stop
         frames_id = np.arange(track['frame'].min(), track['frame'].max() + 1)
 
         # Build an interpolator for position as a function of frame
