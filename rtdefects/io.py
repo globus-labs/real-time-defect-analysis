@@ -40,7 +40,7 @@ def load_file(path: Path) -> np.ndarray:
     data = np.array(data, dtype=np.float32)
     data = np.squeeze(data)
     if data.ndim == 3:
-        data = color.rgb2grey(data)
+        data = color.rgb2gray(data)
     data = (data - data.min()) / (data.max() - data.min())
     return data
 
