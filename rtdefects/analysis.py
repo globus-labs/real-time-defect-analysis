@@ -1,6 +1,6 @@
 """Functions to analyze segmented images"""
 import logging
-from typing import Iterator
+from typing import Iterator, Tuple
 
 from skimage import measure, morphology
 from scipy.stats import siegelslopes
@@ -11,14 +11,15 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def analyze_defects(mask: np.ndarray, min_size: int = 50) -> dict:
+def analyze_defects(mask: np.ndarray, min_size: int = 50) -> Tuple[dict, np.ndarray]:
     """Analyze the voids in a masked image
 
     Args:
         mask: Masks for a defect image
         min_size: Minimum size of defects
     Returns:
-        List of the computed properties
+        - Dictionary of the computed properties
+        - Labeled images
     """
 
     # Clean up the mask
@@ -33,11 +34,11 @@ def analyze_defects(mask: np.ndarray, min_size: int = 50) -> dict:
 
     # Compute region properties
     props = measure.regionprops(labels, mask)
-    radii = [p['equivalent_diameter'] for p in props]
+    radii = [p['equivalent_diameter'] / 2 for p in props]
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
     output['positions'] = [p['centroid'] for p in props]
-    return output
+    return output, labels
 
 
 def convert_to_per_particle(per_frame: pd.DataFrame) -> Iterator[pd.DataFrame]:
@@ -117,6 +118,7 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
         - "end_frame": Last frame in which the void appears
         - "total_frames": Total number of frames in which the void appears
         - "positions": Positions of the void in each frame
+        - "local_id": ID of the void in each frame (if available)
         - "disp_from_start": How far the void has moved from the first frame
         - "max_disp": Maximum distance the void moved
         - "drift_rate": Average displacement from center over time
@@ -135,7 +137,7 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
         # Get the frames where this void is visible
         visible_frames = track['frame']
 
-        # Get all fo the frames between start and stop
+        # Get all frames between start and stop
         frames_id = np.arange(track['frame'].min(), track['frame'].max() + 1)
 
         # Build an interpolator for position as a function of frame
@@ -149,6 +151,10 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
             positions = [(x_inter(f), y_inter(f)) for f in frames_id]
             positions = np.array(positions)
 
+        # Get the ID from each frame
+        id_lookup = dict(zip(track['frame'], track['local_id']))
+        local_id = [id_lookup.get(i, None) for i in frames_id]
+
         # Gather some basic information about the void
         void_info = {
             'start_frame': np.min(visible_frames),
@@ -156,6 +162,7 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
             'total_frames': len(frames_id),
             'inferred_frames': len(frames_id) - len(track),
             'positions': positions,
+            'local_id': local_id
         }
 
         # If there is only one frame, we cannot do the following steps

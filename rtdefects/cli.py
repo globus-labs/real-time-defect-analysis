@@ -60,7 +60,7 @@ def _funcx_func(segmenter, data: bytes):
     mask = segment > 0.9
 
     # Generate the analysis results
-    defect_results = analyze_defects(mask)
+    defect_results, _ = analyze_defects(mask)  # Discard the labeled output
 
     # Convert mask to a TIFF-encoded image
     message = encode_as_tiff(mask)

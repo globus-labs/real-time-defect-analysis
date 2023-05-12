@@ -4,9 +4,10 @@ from pathlib import Path
 from hashlib import md5
 import logging
 
+from skimage import color
 import tensorflow as tf
 import numpy as np
-from skimage import color
+
 
 from rtdefects.segmentation import BaseSegmenter
 
