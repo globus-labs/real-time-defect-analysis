@@ -11,7 +11,6 @@ from hyperspy import io as hsio
 from skimage import color
 import numpy as np
 import imageio
-from skimage.io import MultiImage
 
 
 def load_file(path: Path) -> np.ndarray:
