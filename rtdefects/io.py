@@ -11,6 +11,7 @@ from hyperspy import io as hsio
 from skimage import color
 import numpy as np
 import imageio
+from skimage.io import MultiImage
 
 
 def load_file(path: Path) -> np.ndarray:
@@ -80,3 +81,23 @@ def read_then_encode(path: Path, compress_level: int = 5) -> bytes:
 
     data = load_file(path)
     return encode_as_tiff(data, compress_level)
+
+
+def unpack_video(path: Path, output_dir: Path) -> int:
+    """Unpack frames from a video and write them to an output directory
+
+    Args:
+        path: Path to the video file
+        output_dir: Path in which to write frames
+    Returns:
+        Number of frames
+    """
+
+    filename = path.name.lower()
+    if filename.endswith(".tif") or filename.endswith(".tiff"):
+        img_stack = imageio.mimread(path)
+        count = 0
+        for img in img_stack:
+            imageio.imwrite(output_dir / f'frame-{count:04d}.tiff', img)
+            count += 1
+        return count
