@@ -82,7 +82,7 @@ def read_then_encode(path: Path, compress_level: int = 5) -> bytes:
     return encode_as_tiff(data, compress_level)
 
 
-def unpack_video(path: Path, output_dir: Path) -> int:
+def unpack_video(path: Path | str, output_dir: Path) -> int:
     """Unpack frames from a video and write them to an output directory
 
     Args:
@@ -92,6 +92,11 @@ def unpack_video(path: Path, output_dir: Path) -> int:
         Number of frames
     """
 
+    # Ensure the users give Path objects
+    path = Path(path)
+    output_dir = Path(output_dir)
+
+    # Unpack
     filename = path.name.lower()
     if filename.endswith(".tif") or filename.endswith(".tiff"):
         img_stack = imageio.mimread(path)
