@@ -16,7 +16,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileCreatedEvent, DirCreatedEvent
 
 from rtdefects.flask import app
-from rtdefects.io import read_then_encode
+from rtdefects.io import read_then_encode, unpack_video
 from rtdefects.segmentation import BaseSegmenter
 from rtdefects.segmentation.pytorch import PyTorchSegmenter
 from rtdefects.segmentation.tf import TFSegmenter
@@ -263,6 +263,11 @@ def main(args: Optional[List[str]] = None):
 
     # Make the argument parser
     parser = ArgumentParser()
+
+    # Options for multiple commands
+    parser.add_argument('--model', choices=['tf', 'pytorch'], default='pytorch',
+                        help='Which segmentation model to use')
+    parser.add_argument('--local', action='store_true', help='Perform image analysis locally, instead of via FuncX')
     subparsers = parser.add_subparsers(dest='command', help='Which mode to launch the server in', required=True)
 
     # Add in the configuration settings
@@ -272,15 +277,15 @@ def main(args: Optional[List[str]] = None):
 
     # Add in the launch setting
     start_parser = subparsers.add_parser('start', help='Launch the processing service')
-    start_parser.add_argument('--model', choices=['tf', 'pytorch'], default='pytorch',
-                              help='Which segmentation model to use')
     start_parser.add_argument('--regex', default=r'.*.tiff?$', help='Regex to match files')
     start_parser.add_argument('--redo-existing', action='store_true', help='Submit any existing files in the directory')
-    start_parser.add_argument('--local', action='store_true', help='Perform image analysis locally,'
-                                                                   ' instead of via FuncX')
     start_parser.add_argument('--no-server', action='store_true', help='Skip launching a monitoring server')
     start_parser.add_argument('--timeout', default=None, type=float, help='Stop watching for new files after this time (units: s)')
     start_parser.add_argument('watch_dir', help='Which directory to watch for new files')
+
+    # Add in command for just running the model
+    run_parser = subparsers.add_parser('run', help='Run a video file or a directory of images')
+    run_parser.add_argument('input_path', help='Video file or directory to be analyzed')
 
     # Add in the register setting
     subparsers.add_parser('register', help='(Re)-register the funcX function')
@@ -297,7 +302,7 @@ def main(args: Optional[List[str]] = None):
     elif args.command == 'register':
         return _register_function()
 
-    assert args.command == 'start', f'Internal Error: The command "{args.command}" is not yet supported. Contact Logan'
+    assert args.command in {'start', 'run'}, f'Internal Error: The command "{args.command}" is not yet supported. Contact Logan'
 
     # Select the correct segmenter
     logger.info('Loading in the segmentation tool')
@@ -307,6 +312,25 @@ def main(args: Optional[List[str]] = None):
         segmenter = PyTorchSegmenter()
     else:
         raise ValueError(f'Model type "{args.model}" is not supported yet')
+
+    # Unpack the video and make this act like a "just run what we have" application
+    if args.command == "run":
+        if Path(args.input_path).is_dir():
+            args.watch_dir = args.input_path
+        else:
+            # Unpack the video
+            args.watch_dir = Path(args.input_path + "_run")
+            args.watch_dir.mkdir()
+            logger.info(f'Will write unpacked files from {args.input_path} to {args.watch_dir}')
+
+        count = unpack_video(args.input_path, args.watch_dir)
+        logger.info(f'Unpacked {count} frames')
+
+        # Modify the settings
+        args.timeout = 1
+        args.no_server = True
+        args.redo_existing = True
+        args.regex = ".tiff"
 
     # Prepare the event handler
     if args.local:
@@ -344,6 +368,7 @@ def main(args: Optional[List[str]] = None):
         def _shutoff():
             logger.info('Stopping file watcher.')
             handler.close()
+
         Timer(args.timeout, _shutoff)
         logger.info(f'Set timeout for {args.timeout:.1f}s')
 

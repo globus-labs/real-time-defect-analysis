@@ -1,5 +1,7 @@
 # Real-Time Defect Identification
 
+[![CI](https://github.com/ivem-argonne/real-time-defect-analysis/actions/workflows/python-app.yml/badge.svg)](https://github.com/ivem-argonne/real-time-defect-analysis/actions/workflows/python-app.yml)
+
 This package is a service for real-time defect identification from TEM images. 
 
 The key component is a server that will watch a specific folder on a file system and 
@@ -32,16 +34,16 @@ and deploy a web server that displays a status page. Launch it by calling:
 `rtdefects` will write the segmentation files and a JSON file containing the defect statstics
 to a directory named "masks" within the watched directory.
 
-If you want to run segmentation on a directory of files, you can turn off many of these features:
+If you want to run segmentation on a directory of files, use the "run" command
 
-`rtdefects start --local  --timeout 0 --redo-existing --no-server ./path/to/server`
+`rtdefects run --local --no-server ./path/to/files.tiff`
 
 - `--local` turns off remote computing
 - `--timeout 0` stops watching for new files after 0 seconds have passed.
 - `--redo-existing` runs analysis of all images, even if they have been processed before
 - `--no-server` turns off the status server
 
-Call `rtdefects start -h` for a complete list of options
+Call `rtdefects start -h` or `rtdefects run -h` for a complete list of options.
 
 ## Setting up Remote Computing
 
