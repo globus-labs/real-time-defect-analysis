@@ -37,7 +37,7 @@ def analyze_defects(mask: np.ndarray, min_size: int = 50) -> Tuple[dict, np.ndar
     radii = [p['equivalent_diameter'] / 2 for p in props]
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
-    output['positions'] = [p['centroid'] for p in props]
+    output['positions'] = [p['centroid'][::-1] for p in props]  # From (y, x) to (x, y)
     return output, labels
 
 
