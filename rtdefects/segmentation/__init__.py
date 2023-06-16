@@ -1,6 +1,24 @@
 """Functions related to segmentation and analysis of microscopy images"""
+from pathlib import Path
 
 import numpy as np
+import requests
+
+model_dir = Path(__file__).parent.joinpath('files')
+
+
+def download_model(name: str):
+    """Download a model to local storage
+
+    Args:
+        Name of the model
+    """
+    my_path = model_dir / name
+    with requests.get(f"https://g-29c18.fd635.8443.data.globus.org/ivem/models/{name}", stream=True) as r:
+        r.raise_for_status()
+        with open(my_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
 
 
 # TODO (wardlt): Support segmentation methods besides semantic segmentation

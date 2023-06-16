@@ -1,6 +1,5 @@
 """Implementation using PyTorch.Segmentation"""
 from hashlib import md5
-from pathlib import Path
 from typing import Optional
 import logging
 
@@ -10,16 +9,14 @@ import albumentations as albu
 from skimage import color
 from skimage.transform import resize
 import numpy as np
-import requests
 import torch
 
-from rtdefects.segmentation import BaseSegmenter
+from rtdefects.segmentation import BaseSegmenter, model_dir, download_model
 
 logger = logging.getLogger(__name__)
 
 # Storage for the model
 _model: Optional[torch.nn.Module] = None
-_model_dir = Path(__file__).parent.joinpath('files')
 
 # Lookup tables for the pre-processor used by different versions of the model
 _encoders = {
@@ -27,20 +24,6 @@ _encoders = {
     'voids_segmentation_030323.pth': 'efficientnet-b3',
     'small_voids_031023.pth': 'se_resnext50_32x4d',
 }
-
-
-def download_model(name: str):
-    """Download a model to local storage
-
-    Args:
-        Name of the model
-    """
-    my_path = _model_dir / name
-    with requests.get(f"https://g-29c18.fd635.8443.data.globus.org/ivem/models/{name}", stream=True) as r:
-        r.raise_for_status()
-        with open(my_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
 
 
 class PyTorchSegmenter(BaseSegmenter):
@@ -60,7 +43,7 @@ class PyTorchSegmenter(BaseSegmenter):
         preprocessing_fn = smp.encoders.get_preprocessing_fn(_encoders[model_name])
 
         # Store the path to the model
-        self.model_path = _model_dir / model_name
+        self.model_path = model_dir / model_name
         if not self.model_path.is_file():
             logger.info('Downloading model')
             download_model(model_name)

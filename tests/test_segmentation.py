@@ -7,7 +7,8 @@ import numpy as np
 import imageio
 
 from rtdefects.analysis import analyze_defects
-from rtdefects.segmentation.pytorch import PyTorchSegmenter, download_model
+from rtdefects.segmentation.pytorch import PyTorchSegmenter
+from rtdefects.segmentation import download_model
 from rtdefects.segmentation.tf import TFSegmenter
 
 
@@ -23,14 +24,14 @@ def mask() -> np.ndarray:
 
 
 def test_download(tmpdir):
-    from rtdefects.segmentation import pytorch
-    orig = pytorch._model_dir
+    from rtdefects import segmentation
+    orig = segmentation.model_dir
     try:
-        pytorch._model_dir = tmpdir
+        segmentation.model_dir = tmpdir
         download_model('README.md')
         assert (tmpdir / 'README.md').read_text('ascii').startswith('#')
     finally:
-        pytorch._model_dir = orig
+        segmentation.model_dir = orig
 
 
 @mark.parametrize(
@@ -50,5 +51,5 @@ def test_run(image, segmenter):
 
 def test_analyze(mask):
     mask = mask > 0.99
-    output = analyze_defects(mask)
+    output, _ = analyze_defects(mask)
     assert output['void_frac'] > 0

@@ -9,13 +9,13 @@ import tensorflow as tf
 import numpy as np
 
 
-from rtdefects.segmentation import BaseSegmenter
+from rtdefects.segmentation import BaseSegmenter, download_model, model_dir
 
 logger = logging.getLogger(__name__)
 
 # Global variables for holding the model in memory
 _model: Optional[tf.keras.models.Model] = None
-_model_path = Path(__file__).parent.joinpath('files', 'segment-model.h5')
+_model_path = model_dir / 'segment-model.h5'
 
 
 class TFSegmenter(BaseSegmenter):
@@ -34,6 +34,10 @@ class TFSegmenter(BaseSegmenter):
         assert image_data.shape[-1] == 3, "Expects 3 output channels"
         assert image_data.dtype == np.float32, "Expects np.float32"
         assert 0 <= np.min(image_data) and np.max(image_data) <= 1, "Image values should be in [0, 1]"
+
+        # Download the model if needed
+        if not _model_path.is_file():
+            download_model('segment-model.h5')
 
         # If needed, load the model
         if _model is None:
