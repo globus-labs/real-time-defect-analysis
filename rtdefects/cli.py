@@ -285,7 +285,7 @@ def main(args: Optional[List[str]] = None):
 
     # Add in command for just running the model
     run_parser = subparsers.add_parser('run', help='Run a video file or a directory of images')
-    run_parser.add_argument('input_file', help='Video file to be unpacked')
+    run_parser.add_argument('input_path', help='Video file or directory to be analyzed')
 
     # Add in the register setting
     subparsers.add_parser('register', help='(Re)-register the funcX function')
@@ -315,12 +315,15 @@ def main(args: Optional[List[str]] = None):
 
     # Unpack the video and make this act like a "just run what we have" application
     if args.command == "run":
-        # Unpack the video
-        args.watch_dir = Path(args.input_file + "_run")
-        args.watch_dir.mkdir()
-        logger.info(f'Will write unpacked files from {args.input_file} to {args.watch_dir}')
+        if Path(args.input_path).is_dir():
+            args.watch_dir = args.input_path
+        else:
+            # Unpack the video
+            args.watch_dir = Path(args.input_path + "_run")
+            args.watch_dir.mkdir()
+            logger.info(f'Will write unpacked files from {args.input_path} to {args.watch_dir}')
 
-        count = unpack_video(args.input_file, args.watch_dir)
+        count = unpack_video(args.input_path, args.watch_dir)
         logger.info(f'Unpacked {count} frames')
 
         # Modify the settings

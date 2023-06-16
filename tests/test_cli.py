@@ -1,3 +1,4 @@
+import shutil
 from datetime import datetime
 from pathlib import Path
 from io import BytesIO
@@ -39,9 +40,16 @@ def test_local_reader():
 
 
 def test_run(multi_image: Path):
+    # Run on a video file
     main(['--local', 'run', str(multi_image.absolute())])
     out_dir = multi_image.parent / (multi_image.name + "_run")
     assert out_dir.is_dir()
     assert (out_dir / 'masks').is_dir()
     assert len(list(out_dir.glob("*.tiff"))) == 4
+    assert len(list(out_dir.glob("masks/*.tiff"))) == 4
+
+    # Re-run on the directory it produced
+    shutil.rmtree(out_dir / 'masks')
+    main(['--local', 'run', str(out_dir.absolute())])
+    assert (out_dir / 'masks').is_dir()
     assert len(list(out_dir.glob("masks/*.tiff"))) == 4
