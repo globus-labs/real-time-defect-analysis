@@ -1,6 +1,5 @@
 """Tensorflow implementation of the image segmenter"""
 from typing import Optional
-from pathlib import Path
 from hashlib import md5
 import logging
 
