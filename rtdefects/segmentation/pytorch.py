@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Storage for the model
 _model: Optional[torch.nn.Module] = None
+_loaded_model: Optional[str] = None
 
 # Lookup tables for the pre-processor used by different versions of the model
 _encoders = {
@@ -73,8 +74,8 @@ class PyTorchSegmenter(BaseSegmenter):
         return image['image']
 
     def _load_model(self, device: str):
-        global _model
-        if _model is None:
+        global _model, _loaded_model
+        if _model is None or _loaded_model != self.model_path.name:
             # Make sure the model exists
             if not self.model_path.is_file():
                 raise ValueError(f'Cannot find the model. No such file: {self.model_path}')
@@ -86,9 +87,10 @@ class PyTorchSegmenter(BaseSegmenter):
                     hsh.update(line)
             logger.info(f'Loading the model from {self.model_path}. MD5 Hash: {hsh.hexdigest()}')
 
-            # Load it with Keras
+            # Load it
             _model = torch.load(str(self.model_path), map_location=device)
             logger.info('Model loaded.')
+            _loaded_model = self.model_path.name
         return _model
 
     def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:

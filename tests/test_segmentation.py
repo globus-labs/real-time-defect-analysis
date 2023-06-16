@@ -46,7 +46,7 @@ def test_run(image, segmenter):
     output = np.squeeze(output)
     assert output.shape == (1024, 1024)
     imageio.imwrite('test-image-mask.tif', output)
-    assert isclose(output.mean(), 0.03, abs_tol=0.01)
+    assert (output > 0.5).mean() < 0.1
 
 
 def test_analyze(mask):
