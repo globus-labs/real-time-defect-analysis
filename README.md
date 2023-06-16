@@ -1,5 +1,7 @@
 # Real-Time Defect Identification
 
+[![CI](https://github.com/ivem-argonne/real-time-defect-analysis/actions/workflows/python-app.yml/badge.svg)](https://github.com/ivem-argonne/real-time-defect-analysis/actions/workflows/python-app.yml)
+
 This package is a service for real-time defect identification from TEM images. 
 
 The key component is a server that will watch a specific folder on a file system and 
