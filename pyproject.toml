@@ -19,15 +19,10 @@ classifiers = [
 ]
 dependencies = [
     # Related to the image processing
-    "tensorflow>2",
     "scikit-image==0.19.*",
     "imageio==2.*",
     "imageio-ffmpeg",
     "pint<0.20",
-    "hyperspy==1.7.*",
-    "segmentation_models.pytorch==0.2.*",
-    "torch<2",
-    "albumentations==1.*",
     "imagecodecs",
 
     # Related to post-processing
@@ -56,6 +51,15 @@ test = [
     'pytest-timeout',
     'pytest-mock',
     'pytest-cov',
+]
+tf = [
+    "tensorflow>2",
+]
+torch = [
+    "hyperspy==1.7.*",
+    "segmentation_models.pytorch==0.2.*",
+    "torch<2",
+    "albumentations==1.*",
 ]
 
 [project.scripts]
