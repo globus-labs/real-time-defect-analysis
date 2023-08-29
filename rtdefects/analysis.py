@@ -41,25 +41,26 @@ def analyze_defects(mask: np.ndarray, min_size: int = 50) -> Tuple[dict, np.ndar
     return output, labels
 
 
-def convert_to_per_particle(per_frame: pd.DataFrame) -> Iterator[pd.DataFrame]:
+def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positions') -> Iterator[pd.DataFrame]:
     """Convert the per-frame void information to the per-particle format expected by trackpy
 
     Args:
         per_frame: A DataFrame where each row is a different image and
             contains the defect locations in `positions` and sizes in `radii` columns.
+        position_col: Name of the column holding positions of the particles
     Yields:
         A dataframe where each row is a different defect
     """
 
     for rid, row in per_frame.iterrows():
-        particles = pd.DataFrame(row['positions'], columns=['x', 'y'])
+        particles = pd.DataFrame(row[position_col], columns=['x', 'y'])
         particles['local_id'] = np.arange(len(row['positions']))
         particles['frame'] = rid
         particles['radius'] = row['radii']
         yield particles
 
 
-def compute_drift(tracks: pd.DataFrame) -> np.ndarray:
+def compute_drift(tracks: pd.DataFrame, minimum_tracks: int = 1) -> np.ndarray:
     """Estimate the drift for each frame from the positions of voids that were mapped between multiple frames
 
     We determine the "drift" based on the median displacement of all voids, which is based
@@ -90,14 +91,14 @@ def compute_drift(tracks: pd.DataFrame) -> np.ndarray:
         last_frame = my_frame
 
         # If there are no voids in both frames, assign a drift change of 0
-        if len(aligned) == 0:
+        if len(aligned) < minimum_tracks:
             drifts.append(drifts[-1])
             continue
 
         # Get the median displacements displacements
         last_pos = aligned[['x_x', 'y_x']].values
         cur_pos = aligned[['x_y', 'y_y']].values
-        median_disp = np.median(cur_pos - last_pos, axis=0)
+        median_disp = np.mean(cur_pos - last_pos, axis=0)
 
         # Add the drift to that of the previous image
         drift = np.add(drifts[-1], median_disp)
