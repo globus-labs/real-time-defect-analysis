@@ -11,12 +11,13 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def analyze_defects(mask: np.ndarray, min_size: int = 50) -> Tuple[dict, np.ndarray]:
+def analyze_defects(mask: np.ndarray, min_size: int = 50, edge_buffer: int = 8) -> Tuple[dict, np.ndarray]:
     """Analyze the voids in a masked image
 
     Args:
         mask: Masks for a defect image
         min_size: Minimum size of defects
+        edge_buffer: Label voids as touching edge if they are within this many pixels of the side
     Returns:
         - Dictionary of the computed properties
         - Labeled images
@@ -38,6 +39,15 @@ def analyze_defects(mask: np.ndarray, min_size: int = 50) -> Tuple[dict, np.ndar
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
     output['positions'] = [p['centroid'][::-1] for p in props]  # From (y, x) to (x, y)
+
+    # Determine if it touches the side
+    output['touches_side'] = [
+        min(p['bbox']) <= edge_buffer
+        or p['bbox'][2] >= mask.shape[0] - edge_buffer
+        or p['bbox'][3] >= mask.shape[1] - edge_buffer
+        for p in props
+    ]
+
     return output, labels
 
 
