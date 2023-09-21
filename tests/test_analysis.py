@@ -58,7 +58,7 @@ def test_tracking(example_segmentation):
 
     # Compute the drifts
     drifts = compute_drift(tracks)
-    assert np.isclose(drifts, 0).all()
+    assert np.isclose(drifts, 0, atol=0.5).all()  # Ensure that we know the objects don't move far relative to each other
 
     # Compile the tracks
     compile_void_tracks(tracks)

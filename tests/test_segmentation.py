@@ -1,5 +1,4 @@
 """Test the segmentation function"""
-from math import isclose
 from pathlib import Path
 
 from pytest import fixture, mark
