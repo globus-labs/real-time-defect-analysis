@@ -16,4 +16,4 @@ dependencies:
      - segmentation_models.pytorch==0.2.*
      - torch==1.13.1+cu116  # Using PyPI so we get my locally-installed CUDA
      - -f https://download.pytorch.org/whl/torch_stable.html
-     - -e .
+     - -e .[tf,torch]
