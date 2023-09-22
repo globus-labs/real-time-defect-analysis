@@ -25,11 +25,18 @@ def example_segmentation():
     frames = np.arange(4)
     radii = [np.ones((t.shape[0],)) for t in tracks]
 
+    # Mark which ones are on the side of the frame
+    on_side = [
+        (x < 0.5).any(axis=1)
+        for x in tracks
+    ]
+
     # Make the dataframe
     return pd.DataFrame({
         'positions': tracks,
         'frames': frames,
-        'radii': radii
+        'radii': radii,
+        'touches_side': on_side
     })
 
 
@@ -61,4 +68,8 @@ def test_tracking(example_segmentation):
     assert np.isclose(drifts, 0, atol=0.5).all()  # Ensure that we know the objects don't move far relative to each other
 
     # Compile the tracks
-    compile_void_tracks(tracks)
+    track_data = compile_void_tracks(tracks)
+
+    # Make sure void #1 is known to touch the side
+    assert all(track_data.iloc[0]['touches_side'] == [True] * 4)
+    assert not track_data.iloc[1:]['touches_side'].apply(any).any()

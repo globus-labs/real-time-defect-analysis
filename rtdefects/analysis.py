@@ -67,6 +67,7 @@ def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positi
         particles['local_id'] = np.arange(len(row['positions']))
         particles['frame'] = rid
         particles['radius'] = row['radii']
+        particles['touches_side'] = row['touches_side']
         yield particles
 
 
@@ -130,6 +131,7 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
         - "end_frame": Last frame in which the void appears
         - "total_frames": Total number of frames in which the void appears
         - "positions": Positions of the void in each frame
+        - "touches_side": Whether the void touches the side at this frame
         - "local_id": ID of the void in each frame (if available)
         - "disp_from_start": How far the void has moved from the first frame
         - "max_disp": Maximum distance the void moved
@@ -163,9 +165,17 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
             positions = [(x_inter(f), y_inter(f)) for f in frames_id]
             positions = np.array(positions)
 
-        # Get the ID from each frame
+        # Get the ID from each frame and whether it touches the side
         id_lookup = dict(zip(track['frame'], track['local_id']))
         local_id = [id_lookup.get(i, None) for i in frames_id]
+
+        # Use interpolation to detect if any point used to interpolate
+        #  the void position was on the side
+        if len(track) == 1:
+            touches_side = track['touches_side'].values
+        else:
+            ts_inter = interp1d(track['frame'], np.array(track['touches_side'], dtype=float), kind='linear')
+            touches_side = ts_inter(frames_id) > 0  # It is only zero if neither point used in the left or right touches side (and equals 1)
 
         # Gather some basic information about the void
         void_info = {
@@ -174,6 +184,7 @@ def compile_void_tracks(tracks: pd.DataFrame) -> pd.DataFrame:
             'total_frames': len(frames_id),
             'inferred_frames': len(frames_id) - len(track),
             'positions': positions,
+            'touches_side': touches_side,
             'local_id': local_id
         }
 
