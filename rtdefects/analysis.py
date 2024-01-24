@@ -1,6 +1,6 @@
 """Functions to analyze segmented images"""
 import logging
-from typing import Iterator, Tuple
+from typing import Iterator
 
 from skimage import measure, morphology
 from scipy.stats import siegelslopes
@@ -11,30 +11,24 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def analyze_defects(mask: np.ndarray, min_size: int = 50, edge_buffer: int = 8) -> Tuple[dict, np.ndarray]:
+def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
     """Analyze the voids in a masked image
 
     Args:
-        mask: Masks for a defect image
-        min_size: Minimum size of defects
+        labeled_mask: Mask with regions of each distinct defect labelled with positive integers.
         edge_buffer: Label voids as touching edge if they are within this many pixels of the side
     Returns:
-        - Dictionary of the computed properties
-        - Labeled images
+        Dictionary of the computed properties
     """
 
-    # Clean up the mask
-    mask = morphology.remove_small_objects(mask, min_size=min_size)
-    mask = morphology.remove_small_holes(mask, min_size)
-    mask = morphology.binary_erosion(mask, morphology.square(1))
-    output = {'void_frac': mask.sum() / (mask.shape[0] * mask.shape[1])}
-
-    # Assign labels to the labeled regions
-    labels = measure.label(mask)
-    output['void_count'] = int(labels.max())
+    # Basic statistics
+    output = {
+        'void_frac': (labeled_mask > 0).sum() / (labeled_mask.shape[0] * labeled_mask.shape[1]),
+        'void_count': int(labeled_mask.max())
+    }
 
     # Compute region properties
-    props = measure.regionprops(labels, mask)
+    props = measure.regionprops(labeled_mask, (labeled_mask > 0))
     radii = [p['equivalent_diameter'] / 2 for p in props]
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
@@ -43,12 +37,31 @@ def analyze_defects(mask: np.ndarray, min_size: int = 50, edge_buffer: int = 8) 
     # Determine if it touches the side
     output['touches_side'] = [
         min(p['bbox']) <= edge_buffer
-        or p['bbox'][2] >= mask.shape[0] - edge_buffer
-        or p['bbox'][3] >= mask.shape[1] - edge_buffer
+        or p['bbox'][2] >= labeled_mask.shape[0] - edge_buffer
+        or p['bbox'][3] >= labeled_mask.shape[1] - edge_buffer
         for p in props
     ]
 
-    return output, labels
+    return output
+
+
+def label_instances_from_mask(mask: np.array, min_size: int = 50) -> np.ndarray:
+    """Label distinct instances of defects within a larger void
+
+    Args:
+        mask: Boolean mask of isolated features
+        min_size: Minimum size of defect (units: pixels)
+    Returns:
+        Image where distinct regions are labeled with different positive integers
+    """
+
+    # Clean up the mask
+    mask = morphology.remove_small_objects(mask, min_size=min_size)
+    mask = morphology.remove_small_holes(mask, min_size)
+    mask = morphology.binary_erosion(mask, morphology.square(1))
+
+    # Assign labels to the distinct regions
+    return measure.label(mask)
 
 
 def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positions') -> Iterator[pd.DataFrame]:

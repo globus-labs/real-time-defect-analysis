@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 _config_path = Path(__file__).parent.joinpath('config.json')
 
 
-def _funcx_func(segmenter, data: bytes):
+def analysis_function(segmenter, data: bytes):
     """Function used for FuncX deployment of inference
 
     Inputs:
@@ -36,18 +36,18 @@ def _funcx_func(segmenter, data: bytes):
         - A dictionary of image analysis results
     """
     # Imports must be local to the function
-    from rtdefects.analysis import analyze_defects
+    from rtdefects.analysis import analyze_defects, label_instances_from_mask
     from rtdefects.io import encode_as_tiff
     from io import BytesIO
     from time import perf_counter
+    from imageio import v3 as iio
     import numpy as np
-    import imageio
 
     # Measure when we start
     start_time = perf_counter()
 
     # Load the TIFF file into a numpy array
-    image_gray = imageio.imread(BytesIO(data))
+    image_gray = iio.imread(BytesIO(data))
 
     # Preprocess the image data
     image = segmenter.transform_standard_image(image_gray)
@@ -60,10 +60,11 @@ def _funcx_func(segmenter, data: bytes):
     mask = segment > 0.9
 
     # Generate the analysis results
-    defect_results, _ = analyze_defects(mask)  # Discard the labeled output
+    labeled_mask = label_instances_from_mask(mask)
+    defect_results = analyze_defects(labeled_mask)  # Discard the labeled output
 
     # Convert mask to a TIFF-encoded image
-    message = encode_as_tiff(mask)
+    message = encode_as_tiff(labeled_mask)
 
     # Add the execution time to the defect results
     defect_results['run_time'] = perf_counter() - start_time
@@ -104,7 +105,7 @@ def _register_function():
 
     # Get the Group UUID
     config = json.loads(_config_path.read_text())
-    function_id = client.register_function(_funcx_func, group=config['group_uuid'])
+    function_id = client.register_function(analysis_function, group=config['group_uuid'])
     _set_config(function_id=function_id)
 
 
@@ -252,7 +253,7 @@ class LocalProcessingHandler(ImageProcessEventHandler):
             logger.info(f'Read a {len(image_data) / 1024 ** 2:.1f} MB image from {img_path}')
 
             # Run the function
-            mask, defect_info = _funcx_func(self.segmenter, image_data)
+            mask, defect_info = analysis_function(self.segmenter, image_data)
             rtt = (datetime.now() - detect_time).total_seconds()
 
             yield img_path, mask, defect_info, rtt, detect_time
