@@ -4,6 +4,8 @@ from pathlib import Path
 import numpy as np
 import requests
 
+from rtdefects.analysis import label_instances_from_mask
+
 model_dir = Path(__file__).parent.joinpath('files')
 
 
@@ -45,6 +47,31 @@ class BaseSegmenter:
 
         Args:
             image_data: Images to be segmented.
+        Returns:
+            Image where different instance of the target class are labeled with positive integer
+        """
+        raise NotImplementedError
+
+
+class SemanticSegmenter(BaseSegmenter):
+    """Interface for models which perform semantic segmentation then use a labeling scheme to
+    break mask into difference instances of the same class"""
+
+    min_size: int = 50
+    """Minimum area of instance to be labeled in the mask"""
+    segment_threshold: float = 0.5
+    """Confidence threshold to use when converting a class probability image to a binary mask"""
+
+    def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:
+        mask = self.generate_mask(image_data)
+        mask = mask > self.segment_threshold
+        return label_instances_from_mask(mask, self.min_size)
+
+    def generate_mask(self, image_data: np.ndarray) -> np.ndarray:
+        """Label the regions of an image belonging to a target class
+
+        Args:
+            image_data: Image in the as-transmitted format: unit8 grayscale
         Returns:
             Image segmentation mask as a boolean array
         """
