@@ -25,7 +25,7 @@ def test_funcx():
     """Test the funcx function"""
     data = test_image.read_bytes()
     mask_bytes, defect_info = analysis_function(TFSegmenter(), data)
-    mask = iio.imread(BytesIO(mask_bytes), format='tiff')
+    mask = iio.imread(BytesIO(mask_bytes))
     assert 0 < mask.mean() < 255, "Mask is a single color."
     assert mask.max() == 255
 
