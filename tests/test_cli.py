@@ -27,7 +27,7 @@ def test_funcx():
     mask_bytes, defect_info = analysis_function(TFSegmenter(), data)
     mask = iio.imread(BytesIO(mask_bytes))
     assert 0 < mask.mean() < 255, "Mask is a single color."
-    assert mask.max() == 255
+    assert mask.max() > 1, "There is only one instance"
 
 
 def test_local_reader():

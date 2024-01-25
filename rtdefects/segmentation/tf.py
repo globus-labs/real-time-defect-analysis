@@ -8,7 +8,7 @@ import tensorflow as tf
 import numpy as np
 
 
-from rtdefects.segmentation import BaseSegmenter, download_model, model_dir
+from rtdefects.segmentation import download_model, model_dir, SemanticSegmenter
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ _model: Optional[tf.keras.models.Model] = None
 _model_path = model_dir / 'segment-model.h5'
 
 
-class TFSegmenter(BaseSegmenter):
+class TFSegmenter(SemanticSegmenter):
     """Tensorflow implementation of segmentation"""
 
     def transform_standard_image(self, image_data: np.ndarray) -> np.ndarray:
@@ -25,7 +25,7 @@ class TFSegmenter(BaseSegmenter):
         image = np.array(image, dtype=np.float32) / 255  # Convert to float32
         return np.expand_dims(image, axis=0)
 
-    def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:
+    def generate_mask(self, image_data: np.ndarray) -> np.ndarray:
         global _model  # Stores a loaded model between runs
 
         # Check the shape
@@ -56,4 +56,4 @@ class TFSegmenter(BaseSegmenter):
             logger.info('Model loaded.')
 
         # Perform the segmentation
-        return _model.predict(image_data)
+        return np.squeeze(_model.predict(image_data))

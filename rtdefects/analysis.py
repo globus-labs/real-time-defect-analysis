@@ -52,7 +52,8 @@ def label_instances_from_mask(mask: np.array, min_size: int = 50) -> np.ndarray:
         mask: Boolean mask of isolated features
         min_size: Minimum size of defect (units: pixels)
     Returns:
-        Image where distinct regions are labeled with different positive integers
+        Image where distinct regions are labeled with different positive integers.
+        Numpy array with be uint8.
     """
 
     # Clean up the mask
@@ -61,7 +62,9 @@ def label_instances_from_mask(mask: np.array, min_size: int = 50) -> np.ndarray:
     mask = morphology.binary_erosion(mask, morphology.square(1))
 
     # Assign labels to the distinct regions
-    return measure.label(mask)
+    output = measure.label(mask)
+    assert output.max() < 256, f'Increase bit depth of our masks. This image has {output.max() + 1} objects'
+    return np.array(output, dtype=np.uint8)
 
 
 def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positions') -> Iterator[pd.DataFrame]:

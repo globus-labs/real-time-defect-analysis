@@ -36,12 +36,11 @@ def analysis_function(segmenter, data: bytes):
         - A dictionary of image analysis results
     """
     # Imports must be local to the function
-    from rtdefects.analysis import analyze_defects, label_instances_from_mask
+    from rtdefects.analysis import analyze_defects
     from rtdefects.io import encode_as_tiff
     from io import BytesIO
     from time import perf_counter
     from imageio import v3 as iio
-    import numpy as np
 
     # Measure when we start
     start_time = perf_counter()
@@ -53,18 +52,13 @@ def analysis_function(segmenter, data: bytes):
     image = segmenter.transform_standard_image(image_gray)
 
     # Perform the segmentation
-    segment = segmenter.perform_segmentation(image)
-
-    # Make it into a bool array
-    segment = np.squeeze(segment)
-    mask = segment > 0.9
+    labeled_mask = segmenter.perform_segmentation(image)
 
     # Generate the analysis results
-    labeled_mask = label_instances_from_mask(mask)
     defect_results = analyze_defects(labeled_mask)  # Discard the labeled output
 
     # Convert mask to a TIFF-encoded image
-    message = encode_as_tiff(mask)
+    message = encode_as_tiff(labeled_mask)
 
     # Add the execution time to the defect results
     defect_results['run_time'] = perf_counter() - start_time

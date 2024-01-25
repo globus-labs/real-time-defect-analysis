@@ -49,7 +49,7 @@ def encode_as_tiff(data: np.ndarray, compress_type: int = 5) -> bytes:
     """Encode an image as an 8-bit grayscale TIFF, our desired file format
 
     Args:
-        data: Data to be encoded, should be a float array with range 0-1
+        data: Data to be encoded, should be a float array with range 0-1 or already in uint8
         compress_type: Compression algorithm from tifffile
     Returns:
         TIFF image as a byte array
@@ -58,8 +58,9 @@ def encode_as_tiff(data: np.ndarray, compress_type: int = 5) -> bytes:
     # Convert mask to a uint8-compatible image
     data = np.squeeze(data)
     assert data.ndim == 2, "Image must be grayscale"
-    assert np.logical_and(data >= 0, data <= 1).all(), "Image values must be between 0 and 1"
-    data = np.array(data * 255, dtype=np.uint8)
+    if data.dtype != np.uint8:
+        assert np.logical_and(data >= 0, data <= 1).all(), "Image values must be between 0 and 1"
+        data = np.array(data * 255, dtype=np.uint8)
 
     # Convert mask to a TIFF-encoded image
     output_img = BytesIO()
