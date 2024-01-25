@@ -64,7 +64,7 @@ def analysis_function(segmenter, data: bytes):
     defect_results = analyze_defects(labeled_mask)  # Discard the labeled output
 
     # Convert mask to a TIFF-encoded image
-    message = encode_as_tiff(labeled_mask)
+    message = encode_as_tiff(mask)
 
     # Add the execution time to the defect results
     defect_results['run_time'] = perf_counter() - start_time
