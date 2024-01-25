@@ -7,7 +7,7 @@ from imageio import v3 as iio
 from pytest import fixture
 
 from rtdefects.cli import analysis_function, LocalProcessingHandler, main
-from rtdefects.segmentation.pytorch import PyTorchSegmenter
+from rtdefects.segmentation.pytorch import PyTorchSemanticSegmenter
 from rtdefects.segmentation.tf import TFSegmenter
 
 test_image = Path(__file__).parent.joinpath("test-image.tif")
@@ -31,7 +31,7 @@ def test_funcx():
 
 
 def test_local_reader():
-    reader = LocalProcessingHandler(PyTorchSegmenter())
+    reader = LocalProcessingHandler(PyTorchSemanticSegmenter())
     reader.submit_file(test_image, datetime.now())
     img_path, mask, defect_info, rtt, detect_time = next(reader.iterate_results())
 

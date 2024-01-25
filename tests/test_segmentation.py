@@ -2,9 +2,15 @@
 from pytest import mark
 import numpy as np
 
-from rtdefects.segmentation.pytorch import PyTorchSegmenter
+from rtdefects.segmentation.detectron2 import Detectron2Segmenter
+from rtdefects.segmentation.pytorch import PyTorchSemanticSegmenter
 from rtdefects.segmentation import download_model
 from rtdefects.segmentation.tf import TFSegmenter
+
+pytorch_segment = [
+    PyTorchSemanticSegmenter('voids_segmentation_091321.pth'), PyTorchSemanticSegmenter('voids_segmentation_030323.pth'),
+    PyTorchSemanticSegmenter('small_voids_031023.pth'), PyTorchSemanticSegmenter()
+]
 
 
 def test_download(tmpdir):
@@ -20,8 +26,7 @@ def test_download(tmpdir):
 
 @mark.parametrize(
     'segmenter',
-    [TFSegmenter(), PyTorchSegmenter('voids_segmentation_091321.pth'), PyTorchSegmenter('voids_segmentation_030323.pth'),
-     PyTorchSegmenter('small_voids_031023.pth'), PyTorchSegmenter()]
+    [TFSegmenter(), *pytorch_segment, Detectron2Segmenter()]
 )
 def test_run(image, segmenter):
     image = segmenter.transform_standard_image(image)

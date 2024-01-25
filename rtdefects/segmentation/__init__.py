@@ -23,7 +23,6 @@ def download_model(name: str):
                 f.write(chunk)
 
 
-# TODO (wardlt): Support segmentation methods besides semantic segmentation
 class BaseSegmenter:
     """Base class for implementations of a segmentation tool
 
@@ -40,7 +39,7 @@ class BaseSegmenter:
         Returns:
             Image in whatever form needed by the model
         """
-        raise NotImplementedError
+        return image_data
 
     def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:
         """Perform the image segmentation

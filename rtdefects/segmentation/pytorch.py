@@ -27,8 +27,8 @@ _encoders = {
 }
 
 
-class PyTorchSegmenter(SemanticSegmenter):
-    """Interfaces for models based on segmentation_models.pytorch"""
+class PyTorchSemanticSegmenter(SemanticSegmenter):
+    """Interface for semantic segmentation models based on segmentation_models.pytorch"""
 
     def __init__(
             self,

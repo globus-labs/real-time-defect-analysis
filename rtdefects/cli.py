@@ -18,7 +18,7 @@ from watchdog.events import FileSystemEventHandler, FileCreatedEvent, DirCreated
 from rtdefects.flask import app
 from rtdefects.io import read_then_encode, unpack_video
 from rtdefects.segmentation import BaseSegmenter
-from rtdefects.segmentation.pytorch import PyTorchSegmenter
+from rtdefects.segmentation.pytorch import PyTorchSemanticSegmenter
 from rtdefects.segmentation.tf import TFSegmenter
 
 logger = logging.getLogger(__name__)
@@ -304,7 +304,7 @@ def main(args: Optional[List[str]] = None):
     if args.model == 'tf':
         segmenter = TFSegmenter()
     elif args.model == 'pytorch':
-        segmenter = PyTorchSegmenter()
+        segmenter = PyTorchSemanticSegmenter()
     else:
         raise ValueError(f'Model type "{args.model}" is not supported yet')
 
