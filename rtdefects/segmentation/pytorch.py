@@ -11,7 +11,7 @@ from skimage.transform import resize
 import numpy as np
 import torch
 
-from rtdefects.segmentation import BaseSegmenter, model_dir, download_model
+from rtdefects.segmentation import SemanticSegmenter, model_dir, download_model
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,8 @@ _encoders = {
 }
 
 
-class PyTorchSegmenter(BaseSegmenter):
-    """Interfaces for models based on segmentation_models.pytorch"""
+class PyTorchSemanticSegmenter(SemanticSegmenter):
+    """Interface for semantic segmentation models based on segmentation_models.pytorch"""
 
     def __init__(
             self,
@@ -93,7 +93,7 @@ class PyTorchSegmenter(BaseSegmenter):
             _loaded_model = self.model_path.name
         return _model
 
-    def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:
+    def generate_mask(self, image_data: np.ndarray) -> np.ndarray:
         # Determine the device at runtime
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         model = self._load_model(device)

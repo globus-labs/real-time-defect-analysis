@@ -22,8 +22,8 @@ jobs:
     - name: Set up environment
       run: |
         pip install --upgrade pip setuptools
-        pip install "torch<2" --index-url https://download.pytorch.org/whl/cpu
-        pip install -e .[test,tf,torch]
+        pip install "torch<2" torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+        pip install -e .[test,tf,torch,detectron]
     - name: Lint with flake8
       run: |
         flake8 rtdefects

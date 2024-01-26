@@ -2,14 +2,12 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from io import BytesIO
-import json
 
-import imageio
+from imageio import v3 as iio
 from pytest import fixture
-from imageio import imread
 
-from rtdefects.cli import _funcx_func, LocalProcessingHandler, main
-from rtdefects.segmentation.pytorch import PyTorchSegmenter
+from rtdefects.cli import analysis_function, LocalProcessingHandler, main
+from rtdefects.segmentation.pytorch import PyTorchSemanticSegmenter
 from rtdefects.segmentation.tf import TFSegmenter
 
 test_image = Path(__file__).parent.joinpath("test-image.tif")
@@ -18,23 +16,22 @@ test_image = Path(__file__).parent.joinpath("test-image.tif")
 @fixture()
 def multi_image(tmpdir):
     output = Path(tmpdir) / 'image-stack.tiff'
-    frame = imageio.imread(test_image)
-    imageio.mimwrite(output, [frame] * 4)
+    frame = iio.imread(test_image)
+    iio.imwrite(output, [frame] * 4)
     return output
 
 
 def test_funcx():
     """Test the funcx function"""
     data = test_image.read_bytes()
-    mask_bytes, defect_info = _funcx_func(TFSegmenter(), data)
-    mask = imread(BytesIO(mask_bytes), format='tiff')
+    mask_bytes, defect_info = analysis_function(TFSegmenter(), data)
+    mask = iio.imread(BytesIO(mask_bytes))
     assert 0 < mask.mean() < 255, "Mask is a single color."
-    assert mask.max() == 255
-    print(json.dumps(defect_info))
+    assert mask.max() > 1, "There is only one instance"
 
 
 def test_local_reader():
-    reader = LocalProcessingHandler(PyTorchSegmenter())
+    reader = LocalProcessingHandler(PyTorchSemanticSegmenter())
     reader.submit_file(test_image, datetime.now())
     img_path, mask, defect_info, rtt, detect_time = next(reader.iterate_results())
 

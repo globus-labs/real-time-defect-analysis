@@ -1,5 +1,7 @@
 name: rtdefects
 channels:
+  - pytorch
+  - nvidia/label/cuda-11.7.1
   - defaults
   - conda-forge
 dependencies:
@@ -8,12 +10,32 @@ dependencies:
   - jupyterlab
   - pytest
   - pip
+
+  # General support for deep learning
+  - pytorch-cuda==11.7
+  - pytorch<2
+
+  # Instance segmentation models
+  - torchvision
+  - torchaudio
+  - pycocotools
+
+  #   For building detectron2 from source
+  - cmake
+  - pybind11
+  - cuda-libraries-dev
+  - cuda-nvcc
+
+  # Not available on Conda
   - pip:
-     - funcx
-     - ratelimit
-     - funcx-endpoint
-     - tensorflow>2
-     - segmentation_models.pytorch==0.2.*
-     - torch==1.13.1+cu116  # Using PyPI so we get my locally-installed CUDA
-     - -f https://download.pytorch.org/whl/torch_stable.html
-     - -e .[tf,torch]
+    # Detectron2
+    - git+https://github.com/facebookresearch/detectron2.git
+
+
+    # Remote computing
+    - funcx
+    - ratelimit
+    - funcx-endpoint
+
+    # Base libraries
+    - -e .[tf,torch]

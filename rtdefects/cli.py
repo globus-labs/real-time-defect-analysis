@@ -18,14 +18,14 @@ from watchdog.events import FileSystemEventHandler, FileCreatedEvent, DirCreated
 from rtdefects.flask import app
 from rtdefects.io import read_then_encode, unpack_video
 from rtdefects.segmentation import BaseSegmenter
-from rtdefects.segmentation.pytorch import PyTorchSegmenter
+from rtdefects.segmentation.pytorch import PyTorchSemanticSegmenter
 from rtdefects.segmentation.tf import TFSegmenter
 
 logger = logging.getLogger(__name__)
 _config_path = Path(__file__).parent.joinpath('config.json')
 
 
-def _funcx_func(segmenter, data: bytes):
+def analysis_function(segmenter, data: bytes):
     """Function used for FuncX deployment of inference
 
     Inputs:
@@ -40,30 +40,25 @@ def _funcx_func(segmenter, data: bytes):
     from rtdefects.io import encode_as_tiff
     from io import BytesIO
     from time import perf_counter
-    import numpy as np
-    import imageio
+    from imageio import v3 as iio
 
     # Measure when we start
     start_time = perf_counter()
 
     # Load the TIFF file into a numpy array
-    image_gray = imageio.imread(BytesIO(data))
+    image_gray = iio.imread(BytesIO(data))
 
     # Preprocess the image data
     image = segmenter.transform_standard_image(image_gray)
 
     # Perform the segmentation
-    segment = segmenter.perform_segmentation(image)
-
-    # Make it into a bool array
-    segment = np.squeeze(segment)
-    mask = segment > 0.9
+    labeled_mask = segmenter.perform_segmentation(image)
 
     # Generate the analysis results
-    defect_results, _ = analyze_defects(mask)  # Discard the labeled output
+    defect_results = analyze_defects(labeled_mask)  # Discard the labeled output
 
     # Convert mask to a TIFF-encoded image
-    message = encode_as_tiff(mask)
+    message = encode_as_tiff(labeled_mask)
 
     # Add the execution time to the defect results
     defect_results['run_time'] = perf_counter() - start_time
@@ -104,7 +99,7 @@ def _register_function():
 
     # Get the Group UUID
     config = json.loads(_config_path.read_text())
-    function_id = client.register_function(_funcx_func, group=config['group_uuid'])
+    function_id = client.register_function(analysis_function, group=config['group_uuid'])
     _set_config(function_id=function_id)
 
 
@@ -252,7 +247,7 @@ class LocalProcessingHandler(ImageProcessEventHandler):
             logger.info(f'Read a {len(image_data) / 1024 ** 2:.1f} MB image from {img_path}')
 
             # Run the function
-            mask, defect_info = _funcx_func(self.segmenter, image_data)
+            mask, defect_info = analysis_function(self.segmenter, image_data)
             rtt = (datetime.now() - detect_time).total_seconds()
 
             yield img_path, mask, defect_info, rtt, detect_time
@@ -309,7 +304,7 @@ def main(args: Optional[List[str]] = None):
     if args.model == 'tf':
         segmenter = TFSegmenter()
     elif args.model == 'pytorch':
-        segmenter = PyTorchSegmenter()
+        segmenter = PyTorchSemanticSegmenter()
     else:
         raise ValueError(f'Model type "{args.model}" is not supported yet')
 
