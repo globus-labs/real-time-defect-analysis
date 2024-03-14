@@ -35,7 +35,9 @@ def test_download(tmpdir):
 def test_run(image, segmenter):
     image = segmenter.transform_standard_image(image)
     assert isinstance(image, np.ndarray)
-    output = segmenter.perform_segmentation(image)
-    output = np.squeeze(output)
-    assert output.shape == (1024, 1024)
-    assert (output > 0.5).mean() < 0.4
+    image = segmenter.perform_segmentation(image)
+
+    # Make sure the image is the right shape and has some labelled regions
+    assert image.shape[1:] == (1024, 1024)
+    assert np.any(image, axis=(1, 2)).all()  # All instances must be at least one pixel
+

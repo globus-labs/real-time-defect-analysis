@@ -28,8 +28,7 @@ class BaseSegmenter:
 
     Implementations must provide a function for reshaping from the format we use
     to transmit images (unit8-based grayscale) into whatever is expected by this specific model,
-    and a function that performs the segmentation and returns a boolean array mask.
-    """
+    and a function that performs the segmentation and returns a boolean array mask."""
 
     def transform_standard_image(self, image_data: np.ndarray) -> np.ndarray:
         """Transform an image into a format compatible with the model
@@ -45,9 +44,10 @@ class BaseSegmenter:
         """Perform the image segmentation
 
         Args:
-            image_data: Images to be segmented.
+            image_data: Image to be segmented
         Returns:
-            Image where different instance of the target class are labeled with positive integer
+            Image showing the location and type of each instance. Shape: instance x width x height
+            The value at the pixel is the class of the instance
         """
         raise NotImplementedError
 
@@ -64,7 +64,14 @@ class SemanticSegmenter(BaseSegmenter):
     def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:
         mask = self.generate_mask(image_data)
         mask = mask > self.segment_threshold
-        return label_instances_from_mask(mask, self.min_size)
+
+        # Label then convert to inst x width x height
+        labelled = label_instances_from_mask(mask, self.min_size)
+        n_objects = labelled.max()
+        output = np.zeros((n_objects, *labelled.shape), dtype=np.uint8)
+        for i in range(n_objects):
+            output[i][labelled == i + 1] = i + 1
+        return output
 
     def generate_mask(self, image_data: np.ndarray) -> np.ndarray:
         """Label the regions of an image belonging to a target class

@@ -4,6 +4,7 @@ from tarfile import TarFile
 
 import numpy as np
 import torch.cuda
+from detectron2.structures import Instances
 from fvcore.common.config import CfgNode
 from detectron2.engine import DefaultPredictor
 
@@ -56,10 +57,12 @@ class Detectron2Segmenter(BaseSegmenter):
     def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:
         # Run inference
         outputs = self.model(image_data)
-        inst = outputs['instances']
+        inst: Instances = outputs['instances']
+
+        # Get the type for each class
+        pred_classes = inst.get('pred_classes').cpu().numpy().astype(np.int8) + 1
 
         # Combine them to a single image
         masks_per_inst = inst.pred_masks.cpu().numpy()  # Shape: <instance, x, y>
-        inst_id = np.arange(masks_per_inst.shape[0], dtype=np.uint8) + 1
-        labeled_mask = np.array(masks_per_inst, dtype=np.uint8) * inst_id[:, None, None]
-        return labeled_mask.sum(axis=0)
+        labeled_mask = np.array(masks_per_inst, dtype=np.uint8) * pred_classes[:, None, None]
+        return labeled_mask
