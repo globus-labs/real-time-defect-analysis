@@ -40,4 +40,3 @@ def test_run(image, segmenter):
     # Make sure the image is the right shape and has some labelled regions
     assert image.shape[1:] == (1024, 1024)
     assert np.any(image, axis=(1, 2)).all()  # All instances must be at least one pixel
-

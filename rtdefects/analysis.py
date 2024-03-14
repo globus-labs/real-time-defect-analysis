@@ -1,5 +1,6 @@
 """Functions to analyze segmented images"""
 import logging
+from warnings import warn
 from typing import Iterator
 
 from skimage import measure, morphology
@@ -15,7 +16,7 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
     """Analyze the voids in a masked image
 
     Args:
-        labeled_mask: Mask with regions of each distinct defect labelled with positive integers.
+        labeled_mask: Mask for each of the segmented
         edge_buffer: Label voids as touching edge if they are within this many pixels of the side
     Returns:
         Dictionary of the computed properties
@@ -26,6 +27,11 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
         'void_frac': (labeled_mask > 0).sum() / (labeled_mask.shape[0] * labeled_mask.shape[1]),
         'void_count': int(labeled_mask.max())
     }
+
+    # Collapse the labelled image by taking the maximum
+    if (labeled_mask > 0).sum(axis=0).max() > 1:
+        warn('Some instances in this image overlap which each other. Talk to Logan about fixing it')
+    labeled_mask = labeled_mask.max(axis=0)
 
     # Compute region properties
     props = measure.regionprops(labeled_mask, (labeled_mask > 0))
