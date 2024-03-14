@@ -28,14 +28,17 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
         'void_count': int(labeled_mask.max())
     }
 
-    # Collapse the labelled image by taking the maximum
+    # Create a 2D version of the image, where the pixel value is which defect that region "belongs to"
     if (labeled_mask > 0).sum(axis=0).max() > 1:
         warn('Some instances in this image overlap which each other. Talk to Logan about fixing it')
-    labeled_mask = labeled_mask.max(axis=0)
+    object_inds = np.arange(labeled_mask.shape[0]) + 1
+    with_index_3d = (labeled_mask > 0) * object_inds[:, None, None]
+    with_index = with_index_3d.max(axis=0)
 
     # Compute region properties
-    props = measure.regionprops(labeled_mask, (labeled_mask > 0))
+    props = measure.regionprops(with_index, (with_index > 0))
     radii = [p['equivalent_diameter'] / 2 for p in props]
+    output['type'] = labeled_mask.max(axis=(1, 2))
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
     output['positions'] = [p['centroid'][::-1] for p in props]  # From (y, x) to (x, y)
