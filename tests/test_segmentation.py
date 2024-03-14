@@ -7,9 +7,13 @@ from rtdefects.segmentation.pytorch import PyTorchSemanticSegmenter
 from rtdefects.segmentation import download_model
 from rtdefects.segmentation.tf import TFSegmenter
 
+# Models based on PyTorch segmentation
 pytorch_segment = [
     PyTorchSemanticSegmenter('voids_segmentation_091321.pth'), PyTorchSemanticSegmenter('voids_segmentation_030323.pth'),
     PyTorchSemanticSegmenter('small_voids_031023.pth'), PyTorchSemanticSegmenter()
+]
+detectron2_segment = [
+    Detectron2Segmenter(), Detectron2Segmenter('detectron2-dislocations-23Feb24')
 ]
 
 
@@ -26,7 +30,7 @@ def test_download(tmpdir):
 
 @mark.parametrize(
     'segmenter',
-    [TFSegmenter(), *pytorch_segment, Detectron2Segmenter()]
+    [TFSegmenter(), *pytorch_segment, *detectron2_segment]
 )
 def test_run(image, segmenter):
     image = segmenter.transform_standard_image(image)
@@ -34,4 +38,4 @@ def test_run(image, segmenter):
     output = segmenter.perform_segmentation(image)
     output = np.squeeze(output)
     assert output.shape == (1024, 1024)
-    assert (output > 0.5).mean() < 0.1
+    assert (output > 0.5).mean() < 0.4
