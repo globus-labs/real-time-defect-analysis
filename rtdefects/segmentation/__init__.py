@@ -28,7 +28,8 @@ class BaseSegmenter:
 
     Implementations must provide a function for reshaping from the format we use
     to transmit images (unit8-based grayscale) into whatever is expected by this specific model,
-    and a function that performs the segmentation and returns a boolean array mask."""
+    and a function that performs the segmentation then returns masks which indicate the
+    spatial extent and type of each instance."""
 
     def transform_standard_image(self, image_data: np.ndarray) -> np.ndarray:
         """Transform an image into a format compatible with the model
