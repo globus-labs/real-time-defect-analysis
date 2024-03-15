@@ -57,14 +57,13 @@ def encode_as_tiff(data: np.ndarray, compress_type: int = 5) -> bytes:
 
     # Convert mask to a uint8-compatible image
     data = np.squeeze(data)
-    assert data.ndim == 2, "Image must be grayscale"
-    if data.dtype != np.uint8:
+    if data.dtype.kind not in ['i', 'u']:
         assert np.logical_and(data >= 0, data <= 1).all(), "Image values must be between 0 and 1"
         data = np.array(data * 255, dtype=np.uint8)
 
     # Convert mask to a TIFF-encoded image
     output_img = BytesIO()
-    writer = imageio.get_writer(output_img, format='tiff', mode='i')
+    writer = imageio.get_writer(output_img, format='tiff', mode='i' if data.ndim == 2 else 'I')
     writer.append_data(data, meta={'compression': compress_type})
     return output_img.getvalue()
 

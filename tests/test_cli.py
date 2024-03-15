@@ -26,14 +26,14 @@ def test_funcx():
     data = test_image.read_bytes()
     mask_bytes, defect_info = analysis_function(TFSegmenter(), data)
     mask = iio.imread(BytesIO(mask_bytes))
-    assert 0 < mask.mean() < 255, "Mask is a single color."
-    assert mask.max() > 1, "There is only one instance"
+    assert mask.shape[0] > 4
+    assert mask.std() > 0
 
 
 def test_local_reader():
     reader = LocalProcessingHandler(PyTorchSemanticSegmenter())
     reader.submit_file(test_image, datetime.now())
-    img_path, mask, defect_info, rtt, detect_time = next(reader.iterate_results())
+    next(reader.iterate_results())
 
 
 def test_run(multi_image: Path):

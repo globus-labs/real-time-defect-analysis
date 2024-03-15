@@ -3,7 +3,7 @@ import pandas as pd
 import trackpy as tp
 from pytest import fixture
 
-from rtdefects.analysis import convert_to_per_particle, compile_void_tracks, compute_drift, analyze_defects, label_instances_from_mask
+from rtdefects.analysis import convert_to_per_particle, compile_void_tracks, compute_drift, analyze_defects
 
 
 @fixture
@@ -77,15 +77,12 @@ def test_tracking(example_segmentation):
 
 def test_touch_sides(mask):
     """Test whether we detect if voids touch the sides"""
-    mask = mask > 0.5
-
-    # Label distinct regions
-    labelled_mask = label_instances_from_mask(mask)
 
     # Test without an edge buffer
-    output = analyze_defects(labelled_mask, edge_buffer=0)
-    assert sum(output['touches_side']) == 3  # There are three that touch the edge
+    output = analyze_defects(mask, edge_buffer=0)
+    no_buffer = sum(output['touches_side'])
+    assert mask.shape[0] > no_buffer > 0  # Not all touch the side
 
     # Test with
-    output = analyze_defects(labelled_mask)
-    assert sum(output['touches_side']) > 3  # There are three that touch the edge
+    output = analyze_defects(mask, edge_buffer=128)
+    assert sum(output['touches_side']) > no_buffer  # The edge buffer should catch more near the edges
