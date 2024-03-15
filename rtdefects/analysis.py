@@ -38,7 +38,7 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
     # Compute region properties
     props = measure.regionprops(with_index, (with_index > 0))
     radii = [p['equivalent_diameter'] / 2 for p in props]
-    output['type'] = labeled_mask.max(axis=(1, 2))
+    output['type'] = labeled_mask.max(axis=(1, 2)).tolist()
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
     output['positions'] = [p['centroid'][::-1] for p in props]  # From (y, x) to (x, y)
