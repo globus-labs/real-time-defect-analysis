@@ -69,7 +69,7 @@ class SemanticSegmenter(BaseSegmenter):
         # Label then convert to inst x width x height
         labelled = label_instances_from_mask(mask, self.min_size)
         n_objects = labelled.max()
-        output = np.zeros((n_objects, *labelled.shape), dtype=np.uin)
+        output = np.zeros((n_objects, *labelled.shape), dtype=np.uint8)
         for i in range(n_objects):
             output[i][labelled == i + 1] = i + 1
         return output
