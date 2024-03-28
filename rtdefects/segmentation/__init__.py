@@ -31,6 +31,10 @@ class BaseSegmenter:
     and a function that performs the segmentation then returns masks which indicate the
     spatial extent and type of each instance."""
 
+    @property
+    def class_names(self):
+        raise NotImplementedError()
+
     def transform_standard_image(self, image_data: np.ndarray) -> np.ndarray:
         """Transform an image into a format compatible with the model
 
@@ -62,6 +66,10 @@ class SemanticSegmenter(BaseSegmenter):
     segment_threshold: float = 0.5
     """Confidence threshold to use when converting a class probability image to a binary mask"""
 
+    @property
+    def class_names(self):
+        return ['defect']  # Only one type, so we can make a placeholder
+
     def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:
         mask = self.generate_mask(image_data)
         mask = mask > self.segment_threshold
@@ -71,7 +79,7 @@ class SemanticSegmenter(BaseSegmenter):
         n_objects = labelled.max()
         output = np.zeros((n_objects, *labelled.shape), dtype=np.uint8)
         for i in range(n_objects):
-            output[i][labelled == i + 1] = i + 1
+            output[i][labelled == i + 1] = 1  # The same defect type for each image
         return output
 
     def generate_mask(self, image_data: np.ndarray) -> np.ndarray:

@@ -1,4 +1,5 @@
 """Interface for Detectron2-based models"""
+import json
 from functools import cached_property
 from tarfile import TarFile
 
@@ -25,6 +26,11 @@ class Detectron2Segmenter(BaseSegmenter):
         super().__init__()
         self.model_name = model_name
         self.model_dir = model_dir / model_name
+        self._class_names = []
+
+    @property
+    def class_names(self):
+        return self._class_names
 
     def transform_standard_image(self, image_data: np.ndarray) -> np.ndarray:
         return np.repeat(image_data[:, :, None], 3, axis=2)
@@ -52,6 +58,9 @@ class Detectron2Segmenter(BaseSegmenter):
 
         # Update the path to the model in that configuration
         cfg.MODEL.WEIGHTS = str(self.model_dir / 'model_final.pth')
+
+        # Make the class names
+        self._class_names = json.loads(self.model_dir.joinpath('names.json').read_text())
         return DefaultPredictor(cfg)
 
     def perform_segmentation(self, image_data: np.ndarray) -> np.ndarray:

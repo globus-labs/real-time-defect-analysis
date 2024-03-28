@@ -55,7 +55,7 @@ def analysis_function(segmenter, data: bytes):
     labeled_mask = segmenter.perform_segmentation(image)
 
     # Generate the analysis results
-    defect_results = analyze_defects(labeled_mask)  # Discard the labeled output
+    defect_results = analyze_defects(labeled_mask, defect_names=segmenter.class_names)  # Discard the labeled output
 
     # Convert mask to a TIFF-encoded image
     message = encode_as_tiff(labeled_mask)
