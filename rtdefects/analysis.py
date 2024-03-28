@@ -12,12 +12,13 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
+def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8, defect_names: list[str] | None = None) -> dict:
     """Analyze the voids in a masked image
 
     Args:
-        labeled_mask: Mask for each of the segmented
+        labeled_mask: Mask for each of the segmented defects. Dimensions: <defect> x <width> x <height>
         edge_buffer: Label voids as touching edge if they are within this many pixels of the side
+        defect_names: Names of defects, if available
     Returns:
         Dictionary of the computed properties
     """
@@ -25,7 +26,7 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
     # Basic statistics
     output = {
         'void_frac': (labeled_mask > 0).sum() / (labeled_mask.shape[0] * labeled_mask.shape[1]),
-        'void_count': int(labeled_mask.max())
+        'void_count': labeled_mask.shape[0]
     }
 
     # Create a 2D version of the image, where the pixel value is which defect that region "belongs to"
@@ -42,6 +43,10 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8) -> dict:
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
     output['positions'] = [p['centroid'][::-1] for p in props]  # From (y, x) to (x, y)
+
+    # Use the name of the defect type, if known
+    if defect_names is not None:
+        output['type'] = [defect_names[t - 1] for t in output['type']]
 
     # Determine if it touches the side
     output['touches_side'] = [
