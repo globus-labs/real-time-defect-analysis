@@ -23,6 +23,10 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8, defect_names
         Dictionary of the computed properties
     """
 
+    # Special case: Make a blank image if there are no defects
+    if labeled_mask.shape[0] == 0:
+        labeled_mask = np.zeros((1, *labeled_mask.shape[-2:]), dtype=labeled_mask.dtype)
+
     # Basic statistics
     output = {
         'void_frac': (labeled_mask > 0).sum() / (labeled_mask.shape[0] * labeled_mask.shape[1]),
@@ -51,8 +55,8 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8, defect_names
     # Determine if it touches the side
     output['touches_side'] = [
         min(p['bbox']) <= edge_buffer
-        or p['bbox'][2] >= labeled_mask.shape[0] - edge_buffer
-        or p['bbox'][3] >= labeled_mask.shape[1] - edge_buffer
+        or p['bbox'][2] >= labeled_mask.shape[1] - edge_buffer
+        or p['bbox'][3] >= labeled_mask.shape[2] - edge_buffer
         for p in props
     ]
 
