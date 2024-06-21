@@ -3,7 +3,8 @@ import pandas as pd
 import trackpy as tp
 from pytest import fixture
 
-from rtdefects.analysis import convert_to_per_particle, compile_void_tracks, compute_drift, analyze_defects
+from rtdefects.analysis import convert_to_per_particle, compile_void_tracks, analyze_defects
+from rtdefects.drift import compute_drift_from_tracks
 
 
 @fixture
@@ -64,7 +65,7 @@ def test_tracking(example_segmentation):
     ])
 
     # Compute the drifts
-    drifts = compute_drift(tracks)
+    drifts = compute_drift_from_tracks(tracks)
     assert np.isclose(drifts, 0, atol=0.5).all()  # Ensure that we know the objects don't move far relative to each other
 
     # Compile the tracks
