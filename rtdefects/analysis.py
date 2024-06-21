@@ -85,20 +85,23 @@ def label_instances_from_mask(mask: np.array, min_size: int = 50) -> np.ndarray:
     return np.array(output, dtype=np.uint8)
 
 
-def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positions') -> Iterator[pd.DataFrame]:
+def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positions', exclude_column: str | None = None) -> Iterator[pd.DataFrame]:
     """Convert the per-frame void information to the per-particle format expected by trackpy
 
     Args:
         per_frame: A DataFrame where each row is a different image and
             contains the defect locations in `positions` and sizes in `radii` columns.
         position_col: Name of the column holding positions of the particles
+        exclude_column: If provided, exclude frames where the value of this column is true from output
     Yields:
         A dataframe where each row is a different defect
     """
 
     for rid, row in per_frame.iterrows():
+        if exclude_column is not None and row[exclude_column]:
+            continue
         particles = pd.DataFrame(row[position_col], columns=['x', 'y'])
-        particles['local_id'] = np.arange(len(row['positions']))
+        particles['local_id'] = np.arange(len(row[position_col]))
         particles['frame'] = rid
         particles['radius'] = row['radii']
         particles['touches_side'] = row['touches_side']
