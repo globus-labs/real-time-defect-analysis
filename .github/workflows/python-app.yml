@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Set up environment
       run: |
-        pip install --upgrade pip setuptools
+        pip install --upgrade pip "setuptools<70"
         pip install "torch<2" torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
         pip install -e .[test,tf,torch,detectron]
     - name: Lint with flake8
