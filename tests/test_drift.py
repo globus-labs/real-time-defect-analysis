@@ -3,7 +3,7 @@ import numpy as np
 
 from pytest import fixture
 
-from rtdefects.drift import compute_drift_from_image_pair, compute_drifts_from_images, subtract_drift_from_images
+from rtdefects.drift import compute_drift_from_image_pair, compute_drifts_from_images, subtract_drift_from_images, compute_drifts_from_images_multiref
 from rtdefects.analysis import label_instances_from_mask, analyze_defects
 
 
@@ -44,3 +44,8 @@ def test_drift_from_series(drift_series):
     # Apply the corrections and ensure the defects are atop each other
     corrected_images = subtract_drift_from_images(drift_series, drift)
     assert np.allclose(corrected_images, corrected_images[0])
+
+
+def test_multiref_drift(drift_series):
+    drifts = compute_drifts_from_images_multiref(drift_series, lookahead=(1,))
+    assert np.isclose(np.diff(drifts, axis=0), [10, 6]).all()

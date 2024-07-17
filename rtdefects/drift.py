@@ -1,4 +1,6 @@
 """Algorithms for correcting drift in microscopy images"""
+from typing import Iterable
+
 import numpy as np
 import pandas as pd
 from scipy.signal import fftconvolve
@@ -76,6 +78,46 @@ def compute_drifts_from_images(images: list[np.ndarray], return_conv: bool = Fal
     if return_conv:
         return drifts, np.array(convs)
     return drifts
+
+
+def compute_drifts_from_images_multiref(images: list[np.ndarray], lookahead: Iterable[int] = (1, 2, 4)):
+    """Estimate drift for a stack of images by comparing each image to multiple images in the stack
+
+    Estimates a single drift for each image which explains all pairwise comparisons
+    made between images in the stack using linear least squares.
+
+    The relative drift between two pairs of images, :math:`\\delta d_{i,j}`, is equal to the
+    difference between their absolute drifts, :math:`\\delta d_{i,j} = d_j - d_i`.
+    The values of relative drift from observations of :math:`\\delta_{i,j}`
+    form a series of linear equations and thus may be solved using linear least squares.
+
+    Args:
+          images: Images arranged
+          lookahead: Compute the drift between each frame and those these number of steps
+            ahead of it in the sequence
+    Returns:
+        Drift assumed from all comparisons
+    """
+
+    # Compute the drift between all pairs
+    lookahead = list(lookahead)
+    if any(i <= 0 for i in lookahead):
+        raise ValueError('All lookahead values must be positive')
+    pair_drifts = []
+    first = []
+    second = []
+    for step in lookahead:
+        for i, (image_1, image_2) in enumerate(zip(images, images[step:])):
+            pair_drifts.append(compute_drift_from_image_pair(image_1, image_2))
+            first.append(i)
+            second.append(i + step)
+
+    # Solve the least squares problem
+    a = np.zeros((len(pair_drifts), len(images)))
+    i = np.arange(len(pair_drifts))
+    a[i, first] = -1
+    a[i, second] = 1
+    return np.linalg.lstsq(a, pair_drifts, rcond=None)[0]
 
 
 def compute_drift_from_image_pair(image_1: np.ndarray, image_2: np.ndarray, return_conv: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
