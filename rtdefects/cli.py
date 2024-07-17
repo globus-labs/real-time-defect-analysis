@@ -10,6 +10,7 @@ import logging
 import json
 import re
 
+import numpy as np
 from funcx import FuncXClient
 from ratelimit import sleep_and_retry, rate_limited
 from watchdog.observers import Observer
@@ -385,6 +386,11 @@ def main(args: Optional[List[str]] = None):
             logger.info(f'Result received for {index + 1}/{handler.index}. RTT: {rtt:.2f}s.'
                         f' Backlog: {handler.queue.qsize()}')
 
+            # Make the defect info ready for JSON
+            for key, value in defect_info.items():
+                if isinstance(value, np.ndarray):
+                    defect_info[key] = value.tolist()
+
             # Save the mask to disk
             out_name = mask_dir.joinpath(img_path.name)
             with out_name.open('wb') as fp:
@@ -398,6 +404,7 @@ def main(args: Optional[List[str]] = None):
             defect_info['image-path'] = str(img_path)
             defect_info['rtt'] = rtt
             defect_info['detect_time'] = detect_time.isoformat()
+
             with data_path.open('a') as fp:
                 print(json.dumps(defect_info), file=fp)
     except KeyboardInterrupt:
