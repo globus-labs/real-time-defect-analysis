@@ -96,7 +96,7 @@ def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positi
         A dataframe where each row is a different defect
     """
 
-    for rid, row in per_frame.iterrows():
+    for rid, (_, row) in enumerate(per_frame.iterrows()):
         if exclude_column is not None and row[exclude_column]:
             continue
         particles = pd.DataFrame(row[position_col], columns=['x', 'y'])
