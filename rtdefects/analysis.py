@@ -46,7 +46,7 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8, defect_names
     output['type'] = labeled_mask.max(axis=(1, 2)).tolist()
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
-    output['positions'] = [p['centroid'][::-1] for p in props]  # From (y, x) to (x, y)
+    output['positions'] = np.array([p['centroid'][::-1] for p in props])  # From (y, x) to (x, y)
 
     # Use the name of the defect type, if known
     if defect_names is not None:
@@ -96,7 +96,7 @@ def convert_to_per_particle(per_frame: pd.DataFrame, position_col: str = 'positi
         A dataframe where each row is a different defect
     """
 
-    for rid, row in per_frame.iterrows():
+    for rid, (_, row) in enumerate(per_frame.iterrows()):
         if exclude_column is not None and row[exclude_column]:
             continue
         particles = pd.DataFrame(row[position_col], columns=['x', 'y'])

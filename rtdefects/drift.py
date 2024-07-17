@@ -2,9 +2,10 @@
 import numpy as np
 import pandas as pd
 from scipy.signal import fftconvolve
+from skimage.transform import AffineTransform, warp
 
 
-def compute_drift_from_tracks(tracks: pd.DataFrame, minimum_tracks: int = 1) -> np.ndarray:
+def compute_drifts_from_tracks(tracks: pd.DataFrame, minimum_tracks: int = 1) -> np.ndarray:
     """Estimate the drift for each frame from the positions of voids that were mapped between multiple frames
 
     We determine the "drift" based on the median displacement of all voids, which is based
@@ -52,7 +53,32 @@ def compute_drift_from_tracks(tracks: pd.DataFrame, minimum_tracks: int = 1) -> 
     return np.array(drifts)
 
 
-def compute_drift_from_images(image_1: np.ndarray, image_2: np.ndarray, return_conv: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+def compute_drifts_from_images(images: list[np.ndarray], return_conv: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+    """Estimate drift from a stack of images
+
+    Compares adjacent pairs of images in the list
+
+    Args:
+        images: Images arranged sequentially
+        return_conv: Whether to return the convolution between each pair of images
+    """
+
+    # Get the drift between adjacent pairs
+    convs = []
+    drifts = []
+    for image_1, image_2 in zip(images, images[1:]):
+        drift, conv = compute_drift_from_image_pair(image_1, image_2, return_conv=True)
+        drifts.append(drift)
+        convs.append(conv)
+
+    # Get the cumulative drift
+    drifts = np.cumsum(drifts, axis=0)
+    if return_conv:
+        return drifts, np.array(convs)
+    return drifts
+
+
+def compute_drift_from_image_pair(image_1: np.ndarray, image_2: np.ndarray, return_conv: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Compute the drift between two different frames
 
     Args:
@@ -71,8 +97,21 @@ def compute_drift_from_images(image_1: np.ndarray, image_2: np.ndarray, return_c
     # Find the location of the maximum
     peak_loc = np.unravel_index(np.argmax(conv), conv.shape)
 
-    # Find its deplacement from the image center, that's the location
+    # Find its displacement from the image center, that's the location
     drift = [peak_loc[1] - conv.shape[0] // 2, peak_loc[0] - conv.shape[1] // 2]
     if return_conv:
         return -np.array(drift), conv
     return -np.array(drift)
+
+
+def subtract_drift_from_images(images: list[np.ndarray], drifts: np.ndarray) -> list[np.ndarray]:
+    """Subtract the drift from each image in a series
+
+    Args:
+        images: List of images
+        drifts: Drift computed for the images in the stack
+    Returns:
+        List of images after correction
+    """
+
+    return [warp(image, AffineTransform(translation=-drift)) for image, drift in zip(images, drifts)]
