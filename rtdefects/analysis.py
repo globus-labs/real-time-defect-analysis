@@ -46,7 +46,7 @@ def analyze_defects(labeled_mask: np.ndarray, edge_buffer: int = 8, defect_names
     output['type'] = labeled_mask.max(axis=(1, 2)).tolist()
     output['radii'] = radii
     output['radii_average'] = np.average(radii)
-    output['positions'] = [p['centroid'][::-1] for p in props]  # From (y, x) to (x, y)
+    output['positions'] = np.array([p['centroid'][::-1] for p in props])  # From (y, x) to (x, y)
 
     # Use the name of the defect type, if known
     if defect_names is not None:
