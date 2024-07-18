@@ -1,6 +1,7 @@
 # Real-Time Defect Identification
 
 [![CI](https://github.com/ivem-argonne/real-time-defect-analysis/actions/workflows/python-app.yml/badge.svg)](https://github.com/ivem-argonne/real-time-defect-analysis/actions/workflows/python-app.yml)
+[![Coverage Status](https://coveralls.io/repos/github/ivem-argonne/real-time-defect-analysis/badge.svg?branch=main)](https://coveralls.io/github/ivem-argonne/real-time-defect-analysis?branch=main)
 
 This package is a service for real-time defect identification from TEM images. 
 
