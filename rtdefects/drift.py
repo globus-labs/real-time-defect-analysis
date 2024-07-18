@@ -67,7 +67,7 @@ def compute_drifts_from_images(images: list[np.ndarray], return_conv: bool = Fal
 
     # Get the drift between adjacent pairs
     convs = []
-    drifts = []
+    drifts = [(0, 0)]
     for image_1, image_2 in zip(images, images[1:]):
         drift, conv = compute_drift_from_image_pair(image_1, image_2, return_conv=True)
         drifts.append(drift)

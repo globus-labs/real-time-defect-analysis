@@ -10,7 +10,7 @@ from rtdefects.analysis import label_instances_from_mask, analyze_defects
 @fixture()
 def drift_series():
     image = np.zeros((256, 256), dtype=np.int32)
-    image[40:44, 60:70] = 1
+    image[40:44, 60:70] = 255
 
     # Roll the image progressively in the same direction
     output = [image]
@@ -30,6 +30,7 @@ def test_drift_from_pair(drift_series):
 
 def test_drift_from_series(drift_series):
     drift = compute_drifts_from_images(drift_series)
+    assert drift.shape == (len(drift_series), 2)
     assert np.isclose(np.diff(drift, axis=0), [10, 6]).all()
 
     # Make sure the coordinate system matches up
@@ -43,6 +44,7 @@ def test_drift_from_series(drift_series):
 
     # Apply the corrections and ensure the defects are atop each other
     corrected_images = subtract_drift_from_images(drift_series, drift)
+    assert corrected_images[0].dtype == drift_series[0].dtype
     assert np.equal(corrected_images, corrected_images[0]).all()
 
 
