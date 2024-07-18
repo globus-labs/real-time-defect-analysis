@@ -3,6 +3,7 @@ from typing import Iterable
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from scipy.signal import fftconvolve
 from skimage.transform import AffineTransform, warp
 
@@ -80,7 +81,7 @@ def compute_drifts_from_images(images: list[np.ndarray], return_conv: bool = Fal
     return drifts
 
 
-def compute_drifts_from_images_multiref(images: list[np.ndarray], lookahead: Iterable[int] = (1, 2, 4)):
+def compute_drifts_from_images_multiref(images: list[np.ndarray], offsets: Iterable[int] = (1, 2, 4), pbar: bool = False):
     """Estimate drift for a stack of images by comparing each image to multiple images in the stack
 
     Estimates a single drift for each image which explains all pairwise comparisons
@@ -92,31 +93,34 @@ def compute_drifts_from_images_multiref(images: list[np.ndarray], lookahead: Ite
     form a series of linear equations and thus may be solved using linear least squares.
 
     Args:
-          images: Images arranged
-          lookahead: Compute the drift between each frame and those these number of steps
-            ahead of it in the sequence
+        images: Images arranged
+        offsets: Compute the drift between each frame and those these number of steps ahead of it in the sequence
+        pbar: Whether to display a progress bar
+
     Returns:
         Drift assumed from all comparisons
     """
 
+    # Compute the number of comparisons
+    offsets = list(offsets)
+    if any(i <= 0 for i in offsets):
+        raise ValueError('All offset values must be positive')
+    total_points = len(offsets) * len(images) - sum(offsets)
+
     # Compute the drift between all pairs
-    lookahead = list(lookahead)
-    if any(i <= 0 for i in lookahead):
-        raise ValueError('All lookahead values must be positive')
-    pair_drifts = []
-    first = []
-    second = []
-    for step in lookahead:
+    pair_drifts = np.zeros((total_points, 2))
+    a = np.zeros((total_points, len(images)))
+    prog_bar = tqdm(total=total_points, disable=not pbar)
+    pos = 0
+    for step in offsets:
         for i, (image_1, image_2) in enumerate(zip(images, images[step:])):
-            pair_drifts.append(compute_drift_from_image_pair(image_1, image_2))
-            first.append(i)
-            second.append(i + step)
+            pair_drifts[pos, :] = compute_drift_from_image_pair(image_1, image_2)
+            a[pos, i], a[pos, i + step] = -1, 1
+            prog_bar.update()
+            pos += 1
+    assert pos == total_points, 'My math for the total number of points was wrong'
 
     # Solve the least squares problem
-    a = np.zeros((len(pair_drifts), len(images)))
-    i = np.arange(len(pair_drifts))
-    a[i, first] = -1
-    a[i, second] = 1
     return np.linalg.lstsq(a, pair_drifts, rcond=None)[0]
 
 

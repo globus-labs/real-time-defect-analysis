@@ -49,5 +49,5 @@ def test_drift_from_series(drift_series):
 
 
 def test_multiref_drift(drift_series):
-    drifts = compute_drifts_from_images_multiref(drift_series, lookahead=(1,))
+    drifts = compute_drifts_from_images_multiref(drift_series, offsets=(1,))
     assert np.isclose(np.diff(drifts, axis=0), [10, 6]).all()
