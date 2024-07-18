@@ -153,7 +153,7 @@ def subtract_drift_from_images(images: list[np.ndarray], drifts: np.ndarray) -> 
         images: List of images
         drifts: Drift computed for the images in the stack
     Returns:
-        List of images after correction
+        List of images after correction, in
     """
 
-    return [warp(image, AffineTransform(translation=drift)) for image, drift in zip(images, drifts)]
+    return [warp(image, AffineTransform(translation=drift), preserve_range=True).astype(image.dtype) for image, drift in zip(images, drifts)]
