@@ -1,6 +1,9 @@
 """Algorithms for correcting drift in microscopy images"""
+from typing import Iterable
+
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from scipy.signal import fftconvolve
 from skimage.transform import AffineTransform, warp
 
@@ -65,7 +68,7 @@ def compute_drifts_from_images(images: list[np.ndarray], return_conv: bool = Fal
 
     # Get the drift between adjacent pairs
     convs = []
-    drifts = []
+    drifts = [(0, 0)]
     for image_1, image_2 in zip(images, images[1:]):
         drift, conv = compute_drift_from_image_pair(image_1, image_2, return_conv=True)
         drifts.append(drift)
@@ -76,6 +79,49 @@ def compute_drifts_from_images(images: list[np.ndarray], return_conv: bool = Fal
     if return_conv:
         return drifts, np.array(convs)
     return drifts
+
+
+def compute_drifts_from_images_multiref(images: list[np.ndarray], offsets: Iterable[int] = (1, 2, 4), pbar: bool = False):
+    """Estimate drift for a stack of images by comparing each image to multiple images in the stack
+
+    Estimates a single drift for each image which explains all pairwise comparisons
+    made between images in the stack using linear least squares.
+
+    The relative drift between two pairs of images, :math:`\\delta d_{i,j}`, is equal to the
+    difference between their absolute drifts, :math:`\\delta d_{i,j} = d_j - d_i`.
+    The values of relative drift from observations of :math:`\\delta_{i,j}`
+    form a series of linear equations and thus may be solved using linear least squares.
+
+    Args:
+        images: Images arranged
+        offsets: Compute the drift between each frame and those these number of steps ahead of it in the sequence
+        pbar: Whether to display a progress bar
+
+    Returns:
+        Drift assumed from all comparisons
+    """
+
+    # Compute the number of comparisons
+    offsets = list(offsets)
+    if any(i <= 0 for i in offsets):
+        raise ValueError('All offset values must be positive')
+    total_points = len(offsets) * len(images) - sum(offsets)
+
+    # Compute the drift between all pairs
+    pair_drifts = np.zeros((total_points, 2))
+    a = np.zeros((total_points, len(images)))
+    prog_bar = tqdm(total=total_points, disable=not pbar)
+    pos = 0
+    for step in offsets:
+        for i, (image_1, image_2) in enumerate(zip(images, images[step:])):
+            pair_drifts[pos, :] = compute_drift_from_image_pair(image_1, image_2)
+            a[pos, i], a[pos, i + step] = -1, 1
+            prog_bar.update()
+            pos += 1
+    assert pos == total_points, 'My math for the total number of points was wrong'
+
+    # Solve the least squares problem
+    return np.linalg.lstsq(a, pair_drifts, rcond=None)[0]
 
 
 def compute_drift_from_image_pair(image_1: np.ndarray, image_2: np.ndarray, return_conv: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
@@ -111,7 +157,7 @@ def subtract_drift_from_images(images: list[np.ndarray], drifts: np.ndarray) -> 
         images: List of images
         drifts: Drift computed for the images in the stack
     Returns:
-        List of images after correction
+        List of images after correction, in
     """
 
-    return [warp(image, AffineTransform(translation=-drift)) for image, drift in zip(images, drifts)]
+    return [warp(image, AffineTransform(translation=drift), preserve_range=True).astype(image.dtype) for image, drift in zip(images, drifts)]
