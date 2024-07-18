@@ -43,7 +43,7 @@ def test_drift_from_series(drift_series):
 
     # Apply the corrections and ensure the defects are atop each other
     corrected_images = subtract_drift_from_images(drift_series, drift)
-    assert np.allclose(corrected_images, corrected_images[0])
+    assert np.equal(corrected_images, corrected_images[0]).all()
 
 
 def test_multiref_drift(drift_series):
