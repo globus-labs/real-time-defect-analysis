@@ -150,14 +150,33 @@ def compute_drift_from_image_pair(image_1: np.ndarray, image_2: np.ndarray, retu
     return -np.array(drift)
 
 
-def subtract_drift_from_images(images: list[np.ndarray], drifts: np.ndarray) -> list[np.ndarray]:
+def subtract_drift_from_images(images: list[np.ndarray], drifts: np.ndarray, expand_images: bool = False) -> list[np.ndarray]:
     """Subtract the drift from each image in a series
 
     Args:
         images: List of images
         drifts: Drift computed for the images in the stack
+        expand_images: Whether to increase the size of images to accommodate drift
     Returns:
         List of images after correction, in
     """
 
+    if expand_images:
+        min_drift = np.floor(drifts.min(axis=0)).astype(int)
+        max_drift = np.ceil(drifts.max(axis=0)).astype(int)
+        to_expand = max_drift - min_drift
+
+        expanded_images = []
+        for i, image in enumerate(images):
+            # Create the fattened image
+            new_size = tuple(np.add(to_expand, image.shape[:2])) + image.shape[2:]
+            new_image = np.zeros(new_size, dtype=image.dtype)
+
+            # Place the image at the original origin
+            new_image[
+                min_drift[0]:min_drift[0] + image.shape[0],
+                min_drift[1]:min_drift[1] + image.shape[1],
+            ] = image
+            expanded_images.append(new_image)
+        images = expanded_images  # Use the new images in the drift computation later
     return [warp(image, AffineTransform(translation=drift), preserve_range=True).astype(image.dtype) for image, drift in zip(images, drifts)]
