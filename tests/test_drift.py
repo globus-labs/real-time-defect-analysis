@@ -50,7 +50,7 @@ def test_drift_from_series(drift_series):
     # The defects should still remain motionless even if we expand the images
     expanded_images = subtract_drift_from_images(drift_series, drift, expand_images=True)
     assert expanded_images[0].shape != drift_series[0].shape
-    assert np.equal(corrected_images, corrected_images[0]).all()
+    assert np.equal(expanded_images, expanded_images[0]).all()
 
 
 def test_multiref_drift(drift_series):

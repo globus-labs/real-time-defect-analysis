@@ -1,4 +1,11 @@
-"""Algorithms for correcting drift in microscopy images"""
+"""Algorithms for correcting drift in microscopy images
+
+Drifts are described using the coordinate system conventions of
+`scikit-image <https://scikit-image.org/docs/stable/user_guide/numpy_images.html#coordinate-conventions>`_,
+which defines the origin as the top left image is the origin (0, 0).
+That means that drifts to the right are in the positive x direction
+and drifts downwards are in the positive y direction.
+"""
 from typing import Iterable
 
 import numpy as np
@@ -166,6 +173,7 @@ def subtract_drift_from_images(images: list[np.ndarray],
     """
 
     if expand_images:
+        # Compute the amount of expansion to make
         min_drift = np.floor(drifts.min(axis=0)).astype(int)
         max_drift = np.ceil(drifts.max(axis=0)).astype(int)
         to_expand = max_drift - min_drift
@@ -173,16 +181,16 @@ def subtract_drift_from_images(images: list[np.ndarray],
         expanded_images = []
         for i, (image, drift) in enumerate(zip(images, drifts)):
             # Create the fattened image
-            new_size = tuple(np.add(to_expand, image.shape[:2])) + image.shape[2:]
+            new_size = tuple(np.add(to_expand[::-1], image.shape[:2])) + image.shape[2:]
             new_image = np.zeros(new_size, dtype=image.dtype)
             if fill_value is not None:
                 new_image.fill(fill_value)
 
             # Place the image at the original origin
-            shift = drift.astype(int) - min_drift
+            shift = max_drift - drift.astype(int)
             new_image[
-                shift[0]:shift[0] + image.shape[0],
                 shift[1]:shift[1] + image.shape[1],
+                shift[0]:shift[0] + image.shape[0]
             ] = image
             expanded_images.append(new_image)
         return expanded_images
