@@ -81,7 +81,7 @@ def compute_drifts_from_images(images: list[np.ndarray], return_conv: bool = Fal
     return drifts
 
 
-def compute_drifts_from_images_multiref(images: list[np.ndarray], offsets: Iterable[int] = (1, 2, 4), pbar: bool = False):
+def compute_drifts_from_images_multiref(images: list[np.ndarray], offsets: Iterable[int] = (1, 2, 4), pbar: bool = False) -> np.ndarray:
     """Estimate drift for a stack of images by comparing each image to multiple images in the stack
 
     Estimates a single drift for each image which explains all pairwise comparisons
@@ -150,15 +150,19 @@ def compute_drift_from_image_pair(image_1: np.ndarray, image_2: np.ndarray, retu
     return -np.array(drift)
 
 
-def subtract_drift_from_images(images: list[np.ndarray], drifts: np.ndarray, expand_images: bool = False) -> list[np.ndarray]:
+def subtract_drift_from_images(images: list[np.ndarray],
+                               drifts: np.ndarray,
+                               expand_images: bool = False,
+                               fill_value: int | float | None = None) -> list[np.ndarray]:
     """Subtract the drift from each image in a series
 
     Args:
-        images: List of images
+        images: List of images. Assumes the first two dimensions to be the shape
         drifts: Drift computed for the images in the stack
         expand_images: Whether to increase the size of images to accommodate drift
+        fill_value: Values to fill in matrix when expanding it
     Returns:
-        List of images after correction, in
+        List of images after correction
     """
 
     if expand_images:
@@ -167,16 +171,20 @@ def subtract_drift_from_images(images: list[np.ndarray], drifts: np.ndarray, exp
         to_expand = max_drift - min_drift
 
         expanded_images = []
-        for i, image in enumerate(images):
+        for i, (image, drift) in enumerate(zip(images, drifts)):
             # Create the fattened image
             new_size = tuple(np.add(to_expand, image.shape[:2])) + image.shape[2:]
             new_image = np.zeros(new_size, dtype=image.dtype)
+            if fill_value is not None:
+                new_image.fill(fill_value)
 
             # Place the image at the original origin
+            shift = drift.astype(int) - min_drift
             new_image[
-                min_drift[0]:min_drift[0] + image.shape[0],
-                min_drift[1]:min_drift[1] + image.shape[1],
+                shift[0]:shift[0] + image.shape[0],
+                shift[1]:shift[1] + image.shape[1],
             ] = image
             expanded_images.append(new_image)
-        images = expanded_images  # Use the new images in the drift computation later
-    return [warp(image, AffineTransform(translation=drift), preserve_range=True).astype(image.dtype) for image, drift in zip(images, drifts)]
+        return expanded_images
+    else:
+        return [warp(image, AffineTransform(translation=drift), preserve_range=True).astype(image.dtype) for image, drift in zip(images, drifts)]
