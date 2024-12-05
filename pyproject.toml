@@ -26,7 +26,7 @@ dependencies = [
     "imagecodecs",
 
     # Related to post-processing
-    "pandas==1.*",
+    "pandas",
     "trackpy==0.5.*",
 
     # Related to the CLI/web interface
